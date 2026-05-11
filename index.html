@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>My Cesium Map</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    html, body, #cesiumContainer {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <script>
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
+    const viewer = new Cesium.Viewer('cesiumContainer');
+  </script>
+</body>
+</html>
