@@ -26,6 +26,14 @@
   await Cesium.Cesium3DTileset.fromIonAssetId(2602291),
 );
 
+    // cesium world terrain
+    viewer.scene.setTerrain(
+  new Cesium.Terrain(
+    Cesium.CesiumTerrainProvider.fromIonAssetId(1),
+  ),
+);
+
+
 
     // 東京にカメラを移動
     viewer.camera.flyTo({
