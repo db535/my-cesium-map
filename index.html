@@ -138,81 +138,29 @@
       return Cesium.Color.fromBytes(0, 0, 160, 216);
     }
 
-    // GeoJSONファイル一覧（data/フォルダ内）
-    const geojsonFiles = [
-      'A31-20-21_8404030903.geojson',
-      'A31-20-21_8404030001.geojson',
-      'A31-20-21_8404030643.geojson',
-      'A31-20-21_8404030649.geojson',
-      'A31-20-21_8404030669.geojson',
-      'A31-20-21_8404030677.geojson',
-      'A31-20-21_8404030690.geojson',
-      'A31-20-21_8404030693.geojson',
-      'A31-20-21_8404030696.geojson',
-      'A31-20-21_8404030698.geojson',
-      'A31-20-21_8404030700.geojson',
-      'A31-20-21_8404030904.geojson',
-      'A31-20-21_8404030909.geojson',
-      'A31-20-21_8404030913.geojson',
-      'A31-20-21_8404030922.geojson',
-      'A31-20-21_8404030923.geojson',
-      'A31-20-21_8404030938.geojson',
-      'A31-20-21_8404030963.geojson',
-      'A31-20-21_8404030966.geojson',
-      'A31-20-21_8404031041.geojson',
-      'A31-20-21_8404050001.geojson',
-      'A31-20-21_8404050048.geojson',
-      'A31-20-21_8505050001.geojson',
-      'A31-20-21_8505050124.geojson',
-      'A31-20-21_8505050237.geojson',
-      'A31-20-21_8505050356.geojson',
-      'A31-20-21_8505050717.geojson',
-      'A31-20-21_8505050720.geojson',
-      'A31-20-21_8505050722.geojson',
-      'A31-20-21_8505050731.geojson',
-      'A31-20-21_8505090001.geojson',
-      'A31-20-21_8404030705.geojson',
-      'A31-20-21_8404030706.geojson',
-      'A31-20-21_8404030877.geojson',
-      'A31-20-21_8404030898.geojson',
-    ];
-
     // 全エンティティを水深付きで保持
-    const allEntities = []; // { entity, depth }
+    const allEntities = [];
     const status = document.getElementById('status');
+    status.textContent = 'データ読み込み中...';
 
-    let loaded = 0;
-    for (const file of geojsonFiles) {
-      try {
-        const response = await fetch(`./data/${file}`);
-        const geojson = await response.json();
-        delete geojson.crs; // EPSG:6668はCesiumが未対応のため削除
-        const ds = await Cesium.GeoJsonDataSource.load(geojson, {
-          clampToGround: true,
-        });
+    // 結合済み1ファイルを読み込む
+    const response = await fetch('./data/flood_ueda.geojson');
+    const geojson = await response.json();
+    const ds = await Cesium.GeoJsonDataSource.load(geojson, {
+      clampToGround: true,
+    });
 
-        for (const entity of ds.entities.values) {
-          // 水深属性（A31_205が浸水深コード）
-          const depthCode = entity.properties?.A31_205?.getValue() ?? 1;
-          // コードを実際の水深(m)に変換
-          const depthMap = { 1: 0.3, 2: 0.75, 3: 1.5, 4: 3.5, 5: 7.5 };
-          const depth = depthMap[depthCode] ?? 1.0;
-
-          entity.polygon.material = depthToColor(depth);
-          entity.polygon.outline = false;
-          entity.show = false; // 初期非表示
-
-          allEntities.push({ entity, depth });
-        }
-
-        viewer.dataSources.add(ds);
-        loaded++;
-        status.textContent = `読み込み中... ${loaded}/${geojsonFiles.length}`;
-      } catch (e) {
-        // 読み込めないファイルはスキップ
-      }
+    const depthMap = { 1: 0.3, 2: 0.75, 3: 1.5, 4: 3.5, 5: 7.5 };
+    for (const entity of ds.entities.values) {
+      const depthCode = entity.properties?.depth?.getValue() ?? 1;
+      const depth = depthMap[depthCode] ?? 1.0;
+      entity.polygon.material = depthToColor(depth);
+      entity.polygon.outline = false;
+      entity.show = false;
+      allEntities.push({ entity, depth });
     }
 
+    viewer.dataSources.add(ds);
     status.textContent = `✅ ${allEntities.length}件のデータ読み込み完了`;
 
     // 水位スライダー
