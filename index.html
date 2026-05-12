@@ -19,12 +19,15 @@
 
     const viewer = new Cesium.Viewer('cesiumContainer');
 
-    // 変更後（PLATEAU専用地形）
-    viewer.scene.setTerrain(
-      new Cesium.Terrain(
-        Cesium.CesiumTerrainProvider.fromIonAssetId(3258112),
-      )
-    );
+    // 変更後（PLATEAU直接配信）
+viewer.scene.setTerrain(
+  new Cesium.Terrain(
+    await Cesium.CesiumTerrainProvider.fromUrl(
+      'https://assets.cms.plateau.reearth.io/assets/11/6d05db-49a1-4b4d-a8a8-a346d33aac8d/terrain',
+      { requestVertexNormals: true }
+    )
+  )
+);
 
     // Japan 3D Buildings（Plateau）
     const plateauTileset = viewer.scene.primitives.add(
