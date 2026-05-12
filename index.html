@@ -19,10 +19,10 @@
 
     const viewer = new Cesium.Viewer('cesiumContainer');
 
-    // Japan Regional Terrain（日本専用高精度地形）
+    // 変更後（PLATEAU専用地形）
     viewer.scene.setTerrain(
       new Cesium.Terrain(
-        Cesium.CesiumTerrainProvider.fromIonAssetId(2767062),
+        Cesium.CesiumTerrainProvider.fromIonAssetId(3258112),
       )
     );
 
