@@ -1,694 +1,233 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>上田市 洪水シミュレーション</title>
+  <meta charset="UTF-8">
+  <title>上田市 洪水シミュレーション</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    html, body, #cesiumContainer { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
 
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
-
-<link
-href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css"
-rel="stylesheet"
-/>
-
-<style>
-
-html,body,#cesiumContainer{
-    width:100%;
-    height:100%;
-    margin:0;
-    overflow:hidden;
-    background:black;
-    font-family:sans-serif;
-}
-
-#ui{
-
-    position:absolute;
-
-    top:15px;
-    left:15px;
-
-    width:320px;
-
-    background:rgba(10,20,40,0.88);
-
-    backdrop-filter:blur(10px);
-
-    color:white;
-
-    padding:18px;
-
-    border-radius:14px;
-
-    z-index:999;
-
-    box-shadow:0 0 30px rgba(0,0,0,0.5);
-}
-
-h2{
-    margin:0 0 15px;
-    color:#6cf;
-}
-
-#waterLevelDisplay{
-    font-size:42px;
-    font-weight:bold;
-    color:#4af;
-}
-
-#danger{
-    margin-top:6px;
-    font-size:20px;
-    font-weight:bold;
-}
-
-#waterSlider{
-    width:100%;
-    margin-top:12px;
-}
-
-button{
-
-    width:100%;
-
-    margin-top:8px;
-
-    padding:10px;
-
-    background:#183b5c;
-
-    border:1px solid #4af;
-
-    border-radius:8px;
-
-    color:white;
-
-    cursor:pointer;
-
-    transition:0.2s;
-}
-
-button:hover{
-    background:#285b88;
-}
-
-#status{
-    margin-top:12px;
-    font-size:12px;
-    color:#aaa;
-}
-
-#fps{
-    margin-top:8px;
-    color:#8f8;
-}
-
-.legend{
-    margin-top:15px;
-    font-size:12px;
-}
-
-.legend div{
-    margin-top:4px;
-}
-
-</style>
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(10, 20, 40, 0.85);
+      color: white;
+      padding: 18px;
+      border-radius: 10px;
+      z-index: 999;
+      width: 280px;
+      font-family: sans-serif;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    #ui h2 { margin: 0 0 14px; font-size: 15px; border-bottom: 1px solid #4af; padding-bottom: 8px; }
+    #ui label { font-size: 12px; color: #aaa; }
+    #waterSlider { width: 100%; margin: 8px 0; accent-color: #4af; }
+    #waterLevelDisplay { font-size: 28px; font-weight: bold; color: #4af; }
+    #waterLevelUnit { font-size: 14px; color: #aaa; }
+    .btn-row { display: flex; gap: 6px; margin-top: 10px; }
+    button {
+      flex: 1;
+      padding: 7px 0;
+      background: #1a3a5c;
+      border: 1px solid #4af;
+      border-radius: 5px;
+      color: #4af;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+    button:hover { background: #2a5a8c; }
+    #legend { margin-top: 14px; border-top: 1px solid #333; padding-top: 10px; }
+    #legend h3 { font-size: 11px; color: #aaa; margin: 0 0 6px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; font-size: 11px; }
+    .legend-color { width: 20px; height: 12px; border-radius: 2px; }
+    #status { margin-top: 10px; font-size: 11px; color: #888; text-align: center; }
+    #vrBtn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 7px 0;
+      background: #1a3a2c;
+      border: 1px solid #4f8;
+      border-radius: 5px;
+      color: #4f8;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #vrBtn:hover { background: #2a5a3c; }
+  </style>
 </head>
-
 <body>
-
-<div id="cesiumContainer"></div>
-
-<div id="ui">
-
-<h2>🌊 上田市 洪水シミュレーション</h2>
-
-<div>
-<span id="waterLevelDisplay">0.0</span> m
-</div>
-
-<input
-type="range"
-id="waterSlider"
-min="0"
-max="20"
-step="0.1"
-value="0"
-/>
-
-<div id="danger">安全</div>
-
-<button id="playBtn">▶ 再生</button>
-<button id="stopBtn">⏸ 停止</button>
-<button id="resetBtn">↺ リセット</button>
-<button id="vrBtn">👁 一人称モード</button>
-
-<div id="fps">FPS: --</div>
-
-<div class="legend">
-<div>🟦 0.5m 床下浸水</div>
-<div>🟦 1m 床上浸水</div>
-<div>🟦 2m 1階水没</div>
-<div>🟦 5m 2階水没</div>
-<div>🟦 5m超 壊滅</div>
-</div>
-
-<div id="status">初期化中...</div>
-
-</div>
-
-<script type="module">
-
-// =====================================
-// TOKEN
-// =====================================
-
-Cesium.Ion.defaultAccessToken =
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
-
-
-// =====================================
-// VIEWER
-// =====================================
-
-const viewer = new Cesium.Viewer(
-    'cesiumContainer',
-{
-
-    terrain: Cesium.Terrain.fromWorldTerrain(),
-
-    timeline:false,
-    animation:false,
-
-    baseLayerPicker:false,
-    navigationHelpButton:false,
-
-    geocoder:false,
-
-    sceneModePicker:false
-});
-
-
-// =====================================
-// SCENE
-// =====================================
-
-viewer.scene.globe.enableLighting = true;
-
-// 超重要
-viewer.scene.globe.depthTestAgainstTerrain = false;
-
-viewer.scene.highDynamicRange = true;
-
-viewer.scene.postProcessStages.fxaa.enabled = true;
-
-viewer.shadows = true;
-
-viewer.scene.globe.terrainExaggeration = 1.6;
-
-
-// =====================================
-// OSM BUILDINGS
-// =====================================
-
-try{
-
-    const osmBuildings =
-        await Cesium.createOsmBuildingsAsync();
-
-    viewer.scene.primitives.add(osmBuildings);
-
-}catch(e){
-
-    console.log("OSM Buildings 読み込み失敗");
-
-}
-
-
-// =====================================
-// CAMERA
-// =====================================
-
-const DEFAULT_CAMERA = {
-
-    destination:
-        Cesium.Cartesian3.fromDegrees(
-            138.249,
-            36.401,
-            15000
-        ),
-
-    orientation:{
-
-        heading:0,
-
-        pitch:
-            Cesium.Math.toRadians(-60),
-
-        roll:0
-    }
-};
-
-viewer.camera.flyTo(DEFAULT_CAMERA);
-
-
-// =====================================
-// FILES
-// =====================================
-
-const geojsonFiles = [
-
-'.data/A31-20-21_8404030903.geojson',
-'.data/A31-20-21_8404030001.geojson',
-'.data/A31-20-21_8404030643.geojson',
-'.data/A31-20-21_8404030649.geojson',
-'.data/A31-20-21_8404030669.geojson',
-'.data/A31-20-21_8404030677.geojson',
-'.data/A31-20-21_8404030690.geojson',
-'.data/A31-20-21_8404030693.geojson',
-'A31-20-21_8404030696.geojson',
-'A31-20-21_8404030698.geojson',
-'A31-20-21_8404030700.geojson',
-'A31-20-21_8404030904.geojson',
-'A31-20-21_8404030909.geojson',
-'A31-20-21_8404030913.geojson',
-'A31-20-21_8404030922.geojson',
-'A31-20-21_8404030923.geojson',
-'A31-20-21_8404030938.geojson',
-'A31-20-21_8404030963.geojson',
-'A31-20-21_8404030966.geojson',
-'A31-20-21_8404031041.geojson',
-
-];
-
-
-// =====================================
-// DEPTH MAP
-// =====================================
-
-const depthMap = {
-
-    1:0.3,
-    2:0.75,
-    3:1.5,
-    4:3.5,
-    5:7.5
-};
-
-
-// =====================================
-// WATER COLOR
-// =====================================
-
-function waterColor(depth){
-
-    if(depth <= 0.5)
-        return Cesium.Color.CYAN.withAlpha(0.6);
-
-    if(depth <= 1.0)
-        return Cesium.Color.DEEPSKYBLUE.withAlpha(0.65);
-
-    if(depth <= 2.0)
-        return Cesium.Color.BLUE.withAlpha(0.7);
-
-    if(depth <= 5.0)
-        return Cesium.Color.DARKBLUE.withAlpha(0.75);
-
-    return Cesium.Color.NAVY.withAlpha(0.8);
-}
-
-
-// =====================================
-// LOAD DATA
-// =====================================
-
-const allEntities = [];
-
-const status =
-    document.getElementById('status');
-
-let loaded = 0;
-
-for(const file of geojsonFiles){
-
-    try{
-
-        const ds =
-            await Cesium.GeoJsonDataSource.load(
-                `./data/${file}`,
-                {
-
-                    clampToGround:true
-                }
-            );
-
-        for(const entity of ds.entities.values){
-
-            if(!entity.polygon)
-                continue;
-
-            const code =
-                entity.properties
-                ?.A31_205
-                ?.getValue() ?? 1;
-
-            const depth =
-                depthMap[code] ?? 1;
-
-            entity.polygon.material =
-                waterColor(depth);
-
-            entity.polygon.outline = false;
-
-            entity.show = false;
-
-            allEntities.push({
-
-                entity,
-                maxDepth:depth
-            });
-        }
-
-        viewer.dataSources.add(ds);
-
-        loaded++;
-
-        status.textContent =
-            `読み込み中 ${loaded}/${geojsonFiles.length}`;
-
-    }catch(e){
-
-        console.error(file,e);
-
-    }
-}
-
-status.textContent =
-`✅ ${allEntities.length}件の浸水データ`;
-
-
-// =====================================
-// UI
-// =====================================
-
-const slider =
-    document.getElementById('waterSlider');
-
-const display =
-    document.getElementById('waterLevelDisplay');
-
-const danger =
-    document.getElementById('danger');
-
-
-// =====================================
-// DANGER
-// =====================================
-
-function getDanger(level){
-
-    if(level < 0.5)
-        return ['安全','#8f8'];
-
-    if(level < 1)
-        return ['注意','#ff8'];
-
-    if(level < 2)
-        return ['危険','#fa4'];
-
-    if(level < 5)
-        return ['避難','#f44'];
-
-    return ['壊滅','#f0f'];
-}
-
-
-// =====================================
-// FLOOD UPDATE
-// =====================================
-
-function updateFlood(level){
-
-    display.textContent =
-        level.toFixed(1);
-
-    const d =
-        getDanger(level);
-
-    danger.textContent =
-        d[0];
-
-    danger.style.color =
-        d[1];
-
-    for(const obj of allEntities){
-
-        const e = obj.entity;
-
-        if(level <= 0){
-
-            e.show = false;
-
-            continue;
-        }
-
-        if(level >= obj.maxDepth){
-
-            e.show = true;
-
-        }else{
-
-            e.show = false;
-        }
-    }
-}
-
-
-// =====================================
-// SLIDER
-// =====================================
-
-slider.addEventListener(
-    'input',
-    ()=>{
-
-    updateFlood(
-        parseFloat(slider.value)
+  <div id="cesiumContainer"></div>
+
+  <div id="ui">
+    <h2>🌊 上田市 洪水シミュレーション</h2>
+
+    <label>現在の水位</label>
+    <div>
+      <span id="waterLevelDisplay">0.0</span>
+      <span id="waterLevelUnit"> m</span>
+    </div>
+    <input type="range" id="waterSlider" min="0" max="20" step="0.1" value="0">
+
+    <div class="btn-row">
+      <button id="btnPlay">▶ 再生</button>
+      <button id="btnStop">⏸ 停止</button>
+      <button id="btnReset">↺ リセット</button>
+    </div>
+
+    <button id="vrBtn">👁 一人称視点（VR）</button>
+
+    <div id="legend">
+      <h3>浸水深の凡例</h3>
+      <div class="legend-item"><div class="legend-color" style="background:rgba(0,255,255,0.6)"></div>〜0.5m（床下浸水）</div>
+      <div class="legend-item"><div class="legend-color" style="background:rgba(0,191,255,0.65)"></div>〜1.0m（床上浸水）</div>
+      <div class="legend-item"><div class="legend-color" style="background:rgba(0,128,255,0.7)"></div>〜2.0m（1階水没）</div>
+      <div class="legend-item"><div class="legend-color" style="background:rgba(0,64,255,0.75)"></div>〜5.0m（2階水没）</div>
+      <div class="legend-item"><div class="legend-color" style="background:rgba(0,0,160,0.85)"></div>5.0m超（壊滅的）</div>
+    </div>
+
+    <div id="status">データ読み込み中...</div>
+  </div>
+
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
+
+    // ビューワー初期化
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: await Cesium.createWorldTerrainAsync({
+        requestVertexNormals: true
+      }),
+      timeline: false,
+      animation: false,
+      baseLayerPicker: false,
+      navigationHelpButton: false,
+    });
+
+    // 3D建物
+    const plateauTileset = viewer.scene.primitives.add(
+      await Cesium.Cesium3DTileset.fromIonAssetId(2602291)
+    );
+    const osmTileset = viewer.scene.primitives.add(
+      await Cesium.Cesium3DTileset.fromIonAssetId(96188)
     );
 
-});
+    // 地形設定
+    viewer.scene.globe.terrainExaggeration = 2.0;
+    viewer.scene.globe.enableLighting = true;
+    viewer.shadows = true;
 
+    // 初期カメラ（上田市俯瞰）
+    const DEFAULT_CAMERA = {
+      destination: Cesium.Cartesian3.fromDegrees(138.2489, 36.4018, 5000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-45),
+        roll: 0
+      }
+    };
+    viewer.camera.flyTo(DEFAULT_CAMERA);
 
-// =====================================
-// PLAY
-// =====================================
+    // 水深に応じた色
+    function depthToColor(depth) {
+      if (depth <= 0.5) return Cesium.Color.fromBytes(0, 255, 255, 150);
+      if (depth <= 1.0) return Cesium.Color.fromBytes(0, 191, 255, 165);
+      if (depth <= 2.0) return Cesium.Color.fromBytes(0, 128, 255, 178);
+      if (depth <= 5.0) return Cesium.Color.fromBytes(0, 64, 255, 191);
+      return Cesium.Color.fromBytes(0, 0, 160, 216);
+    }
 
-let interval = null;
+    // 全エンティティを水深付きで保持
+    const allEntities = [];
+    const status = document.getElementById('status');
+    status.textContent = 'データ読み込み中...';
 
-document
-.getElementById('playBtn')
-.addEventListener('click',()=>{
+    // 結合済み1ファイルを読み込む
+    const response = await fetch('./data/flood_ueda.geojson');
+    const geojson = await response.json();
+    const ds = await Cesium.GeoJsonDataSource.load(geojson, {
+      clampToGround: true,
+    });
 
-    if(interval) return;
+    const depthMap = { 1: 0.3, 2: 0.75, 3: 1.5, 4: 3.5, 5: 7.5 };
+    for (const entity of ds.entities.values) {
+      const depthCode = entity.properties?.depth?.getValue() ?? 1;
+      const depth = depthMap[depthCode] ?? 1.0;
+      entity.polygon.material = depthToColor(depth);
+      entity.polygon.outline = false;
+      entity.show = false;
+      allEntities.push({ entity, depth });
+    }
 
-    interval = setInterval(()=>{
+    viewer.dataSources.add(ds);
+    status.textContent = `✅ ${allEntities.length}件のデータ読み込み完了`;
 
-        let v =
-            parseFloat(slider.value);
+    // 水位スライダー
+    const slider = document.getElementById('waterSlider');
+    const display = document.getElementById('waterLevelDisplay');
 
-        v += 0.03;
+    function updateWaterLevel(level) {
+      display.textContent = level.toFixed(1);
+      for (const { entity, depth } of allEntities) {
+        entity.show = depth <= level;
+      }
+    }
 
-        if(v >= 20){
+    slider.addEventListener('input', () => {
+      updateWaterLevel(parseFloat(slider.value));
+    });
 
-            v = 20;
+    // 再生・停止・リセット
+    let playInterval = null;
 
-            clearInterval(interval);
-
-            interval = null;
+    document.getElementById('btnPlay').addEventListener('click', () => {
+      if (playInterval) return;
+      playInterval = setInterval(() => {
+        const val = Math.min(parseFloat(slider.value) + 0.05, 20);
+        slider.value = val;
+        updateWaterLevel(val);
+        if (val >= 20) {
+          clearInterval(playInterval);
+          playInterval = null;
         }
+      }, 80);
+    });
 
-        slider.value = v;
+    document.getElementById('btnStop').addEventListener('click', () => {
+      clearInterval(playInterval);
+      playInterval = null;
+    });
 
-        updateFlood(v);
+    document.getElementById('btnReset').addEventListener('click', () => {
+      clearInterval(playInterval);
+      playInterval = null;
+      slider.value = 0;
+      updateWaterLevel(0);
+    });
 
-    },30);
-
-});
-
-
-// =====================================
-// STOP
-// =====================================
-
-document
-.getElementById('stopBtn')
-.addEventListener('click',()=>{
-
-    clearInterval(interval);
-
-    interval = null;
-});
-
-
-// =====================================
-// RESET
-// =====================================
-
-document
-.getElementById('resetBtn')
-.addEventListener('click',()=>{
-
-    clearInterval(interval);
-
-    interval = null;
-
-    slider.value = 0;
-
-    updateFlood(0);
-});
-
-
-// =====================================
-// FIRST PERSON
-// =====================================
-
-let firstPerson = false;
-
-document
-.getElementById('vrBtn')
-.addEventListener('click',()=>{
-
-    firstPerson = !firstPerson;
-
-    if(firstPerson){
-
-        const carto =
-            Cesium.Cartographic
-            .fromDegrees(
-                138.249,
-                36.401
-            );
-
-        const ground =
-            viewer.scene.globe
-            .getHeight(carto) || 0;
-
+    // VR一人称視点
+    let vrMode = false;
+    document.getElementById('vrBtn').addEventListener('click', () => {
+      vrMode = !vrMode;
+      if (vrMode) {
+        // 地面スレスレの一人称視点（千曲川沿い・上田市街）
         viewer.camera.flyTo({
-
-            destination:
-                Cesium.Cartesian3
-                .fromDegrees(
-                    138.249,
-                    36.401,
-                    ground + 1.7
-                ),
-
-            orientation:{
-
-                heading:
-                    Cesium.Math
-                    .toRadians(90),
-
-                pitch:0,
-
-                roll:0
-            },
-
-            duration:2
+          destination: Cesium.Cartesian3.fromDegrees(138.2489, 36.4018, 2),
+          orientation: {
+            heading: Cesium.Math.toRadians(90),
+            pitch: Cesium.Math.toRadians(0),
+            roll: 0
+          },
+          duration: 2
         });
+        document.getElementById('vrBtn').textContent = '🗺 俯瞰視点に戻る';
+      } else {
+        viewer.camera.flyTo({ ...DEFAULT_CAMERA, duration: 2 });
+        document.getElementById('vrBtn').textContent = '👁 一人称視点（VR）';
+      }
+    });
 
-    }else{
-
-        viewer.camera.flyTo({
-            ...DEFAULT_CAMERA,
-            duration:2
-        });
-    }
-});
-
-
-// =====================================
-// WASD
-// =====================================
-
-const keys = {};
-
-window.addEventListener(
-    'keydown',
-    e=>{
-        keys[e.key.toLowerCase()] = true;
-});
-
-window.addEventListener(
-    'keyup',
-    e=>{
-        keys[e.key.toLowerCase()] = false;
-});
-
-viewer.clock.onTick
-.addEventListener(()=>{
-
-    if(!firstPerson)
-        return;
-
-    const speed =
-        keys['shift'] ? 4 : 1.5;
-
-    if(keys['w'])
-        viewer.camera.moveForward(speed);
-
-    if(keys['s'])
-        viewer.camera.moveBackward(speed);
-
-    if(keys['a'])
-        viewer.camera.moveLeft(speed);
-
-    if(keys['d'])
-        viewer.camera.moveRight(speed);
-
-});
-
-
-// =====================================
-// FPS
-// =====================================
-
-let frames = 0;
-
-let last = performance.now();
-
-function fpsLoop(){
-
-    frames++;
-
-    const now =
-        performance.now();
-
-    if(now - last >= 1000){
-
-        document
-        .getElementById('fps')
-        .textContent =
-            `FPS: ${frames}`;
-
-        frames = 0;
-
-        last = now;
-    }
-
-    requestAnimationFrame(fpsLoop);
-}
-
-fpsLoop();
-
-
-// =====================================
-// INITIAL
-// =====================================
-
-updateFlood(0);
-
-</script>
+  </script>
 </body>
 </html>
