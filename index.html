@@ -5,13 +5,17 @@
 <title>上田市 洪水シミュレーション Ultimate</title>
 
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<link
+href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css"
+rel="stylesheet"
+/>
 
 <style>
-html, body, #cesiumContainer{
-    margin:0;
+
+html,body,#cesiumContainer{
     width:100%;
     height:100%;
+    margin:0;
     overflow:hidden;
     background:black;
     font-family:sans-serif;
@@ -22,13 +26,20 @@ html, body, #cesiumContainer{
     top:15px;
     left:15px;
     width:320px;
-    background:rgba(10,20,40,0.82);
-    backdrop-filter:blur(12px);
+
+    background:rgba(10,20,40,0.88);
+
+    backdrop-filter:blur(10px);
+
     color:white;
+
     padding:18px;
+
     border-radius:14px;
+
     z-index:999;
-    box-shadow:0 0 25px rgba(0,0,0,0.5);
+
+    box-shadow:0 0 30px rgba(0,0,0,0.5);
 }
 
 h2{
@@ -38,34 +49,41 @@ h2{
 
 #waterLevelDisplay{
     font-size:42px;
-    color:#4af;
     font-weight:bold;
+    color:#4af;
 }
 
 #danger{
-    margin-top:8px;
-    font-size:18px;
+    margin-top:6px;
+    font-size:20px;
     font-weight:bold;
 }
 
 #waterSlider{
     width:100%;
-    margin-top:10px;
+    margin-top:12px;
 }
 
 button{
     width:100%;
     margin-top:8px;
     padding:10px;
-    background:#163450;
+
+    background:#183b5c;
+
     border:1px solid #4af;
+
     border-radius:8px;
+
     color:white;
+
     cursor:pointer;
+
+    transition:0.2s;
 }
 
 button:hover{
-    background:#245880;
+    background:#285b88;
 }
 
 #status{
@@ -87,6 +105,7 @@ button:hover{
 .legend div{
     margin-top:4px;
 }
+
 </style>
 </head>
 
@@ -102,7 +121,14 @@ button:hover{
 <span id="waterLevelDisplay">0.0</span> m
 </div>
 
-<input type="range" id="waterSlider" min="0" max="20" step="0.1" value="0">
+<input
+type="range"
+id="waterSlider"
+min="0"
+max="20"
+step="0.1"
+value="0"
+/>
 
 <div id="danger">安全</div>
 
@@ -127,56 +153,101 @@ button:hover{
 
 <script type="module">
 
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
+// ======================================
+// Cesium Token
+// ======================================
 
-const viewer = new Cesium.Viewer('cesiumContainer',{
+Cesium.Ion.defaultAccessToken =
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
 
-    terrainProvider: await Cesium.createWorldTerrainAsync({
-        requestVertexNormals:true
-    }),
+
+// ======================================
+// Viewer
+// ======================================
+
+const viewer = new Cesium.Viewer(
+    'cesiumContainer',
+    {
+
+    terrain: Cesium.Terrain.fromWorldTerrain(),
 
     timeline:false,
     animation:false,
+
     baseLayerPicker:false,
     navigationHelpButton:false,
+
     geocoder:false,
 
-    requestRenderMode:true,
-    maximumRenderTimeChange:Infinity
+    sceneModePicker:false
 });
 
-viewer.scene.globe.depthTestAgainstTerrain = true;
+
+// ======================================
+// Scene Settings
+// ======================================
+
 viewer.scene.globe.enableLighting = true;
 
-viewer.scene.fog.enabled = true;
-viewer.scene.fog.density = 0.00015;
+viewer.scene.globe.depthTestAgainstTerrain = true;
 
 viewer.scene.highDynamicRange = true;
 
-viewer.shadows = true;
-
 viewer.scene.postProcessStages.fxaa.enabled = true;
 
-viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+viewer.shadows = true;
 
-viewer.scene.globe.terrainExaggeration = 1.8;
+viewer.scene.globe.terrainExaggeration = 1.6;
 
-const osmTileset = viewer.scene.primitives.add(
-    await Cesium.Cesium3DTileset.fromIonAssetId(96188)
-);
 
-viewer.camera.flyTo({
-    destination:Cesium.Cartesian3.fromDegrees(
-        138.249,
-        36.401,
-        6000
-    ),
+// ======================================
+// OSM Buildings
+// ======================================
+
+try{
+
+    const osmBuildings =
+        await Cesium.createOsmBuildingsAsync();
+
+    viewer.scene.primitives.add(osmBuildings);
+
+}catch(e){
+
+    console.log("OSM Buildings 読み込み失敗");
+
+}
+
+
+// ======================================
+// Camera
+// ======================================
+
+const DEFAULT_CAMERA = {
+
+    destination:
+        Cesium.Cartesian3.fromDegrees(
+            138.249,
+            36.401,
+            15000
+        ),
+
     orientation:{
+
         heading:0,
-        pitch:Cesium.Math.toRadians(-45),
+
+        pitch:
+            Cesium.Math.toRadians(-60),
+
         roll:0
     }
-});
+};
+
+viewer.camera.flyTo(DEFAULT_CAMERA);
+
+
+// ======================================
+// GeoJSON Files
+// ======================================
 
 const geojsonFiles = [
 
@@ -184,41 +255,54 @@ const geojsonFiles = [
 'A31-20-21_8404030001.geojson',
 'A31-20-21_8404030643.geojson',
 'A31-20-21_8404030649.geojson',
+'A31-20-21_8404030669.geojson',
+'A31-20-21_8404030677.geojson',
+'A31-20-21_8404030690.geojson',
+'A31-20-21_8404030693.geojson',
+'A31-20-21_8404030696.geojson',
+'A31-20-21_8404030698.geojson',
+'A31-20-21_8404030700.geojson',
+'A31-20-21_8404030904.geojson',
+'A31-20-21_8404030909.geojson',
+'A31-20-21_8404030913.geojson',
+'A31-20-21_8404030922.geojson',
+'A31-20-21_8404030923.geojson',
+'A31-20-21_8404030938.geojson',
+'A31-20-21_8404030963.geojson',
+'A31-20-21_8404030966.geojson',
+'A31-20-21_8404031041.geojson',
 
 ];
 
-const allEntities=[];
 
-const status=document.getElementById('status');
-
-function getDanger(level){
-
-    if(level < 0.5) return ['安全','#8f8'];
-    if(level < 1.0) return ['注意','#ff8'];
-    if(level < 2.0) return ['危険','#fa4'];
-    if(level < 5.0) return ['避難','#f44'];
-
-    return ['壊滅','#f0f'];
-}
+// ======================================
+// Water Color
+// ======================================
 
 function waterColor(depth){
 
     if(depth < 0.5)
-        return Cesium.Color.CYAN.withAlpha(0.45);
+        return Cesium.Color.CYAN.withAlpha(0.7);
 
     if(depth < 1)
-        return Cesium.Color.DEEPSKYBLUE.withAlpha(0.5);
+        return Cesium.Color.DEEPSKYBLUE.withAlpha(0.72);
 
     if(depth < 2)
-        return Cesium.Color.BLUE.withAlpha(0.55);
+        return Cesium.Color.BLUE.withAlpha(0.74);
 
     if(depth < 5)
-        return Cesium.Color.DARKBLUE.withAlpha(0.65);
+        return Cesium.Color.DARKBLUE.withAlpha(0.78);
 
-    return Cesium.Color.NAVY.withAlpha(0.75);
+    return Cesium.Color.NAVY.withAlpha(0.85);
 }
 
-const depthMap={
+
+// ======================================
+// Depth Map
+// ======================================
+
+const depthMap = {
+
     1:0.3,
     2:0.75,
     3:1.5,
@@ -226,37 +310,61 @@ const depthMap={
     5:7.5
 };
 
-let loaded=0;
+
+// ======================================
+// Data Load
+// ======================================
+
+const allEntities = [];
+
+const status =
+    document.getElementById('status');
+
+let loaded = 0;
 
 for(const file of geojsonFiles){
 
     try{
 
-        const ds = await Cesium.GeoJsonDataSource.load(
-            `./data/${file}`
-        );
+        const ds =
+            await Cesium.GeoJsonDataSource.load(
+                `./data/${file}`
+            );
 
         for(const entity of ds.entities.values){
 
-            if(!entity.polygon) continue;
+            if(!entity.polygon)
+                continue;
 
             const code =
-                entity.properties?.A31_205?.getValue() ?? 1;
+                entity.properties
+                ?.A31_205
+                ?.getValue() ?? 1;
 
-            const depth = depthMap[code] ?? 1;
-
-            entity.polygon.height = 0;
-
-            entity.polygon.extrudedHeight = 0;
+            const depth =
+                depthMap[code] ?? 1;
 
             entity.polygon.material =
                 waterColor(depth);
 
             entity.polygon.outline = false;
 
-            entity.polygon.perPositionHeight = false;
+            entity.polygon.heightReference =
+                Cesium.HeightReference.CLAMP_TO_GROUND;
+
+            entity.polygon.extrudedHeightReference =
+                Cesium.HeightReference.RELATIVE_TO_GROUND;
+
+            entity.polygon.extrudedHeight =
+                new Cesium.ConstantProperty(0);
+
+            entity.polygon.perPositionHeight =
+                false;
+
+            entity.show = false;
 
             allEntities.push({
+
                 entity,
                 maxDepth:depth
             });
@@ -267,15 +375,22 @@ for(const file of geojsonFiles){
         loaded++;
 
         status.textContent =
-            `読み込み ${loaded}/${geojsonFiles.length}`;
+            `読み込み中 ${loaded}/${geojsonFiles.length}`;
 
     }catch(e){
-        console.error(e);
+
+        console.error(file,e);
+
     }
 }
 
 status.textContent =
-    `✅ ${allEntities.length} 浸水ポリゴン`;
+`✅ ${allEntities.length}件の浸水データ`;
+
+
+// ======================================
+// UI
+// ======================================
 
 const slider =
     document.getElementById('waterSlider');
@@ -286,37 +401,80 @@ const display =
 const danger =
     document.getElementById('danger');
 
+
+// ======================================
+// Danger Level
+// ======================================
+
+function getDanger(level){
+
+    if(level < 0.5)
+        return ['安全','#8f8'];
+
+    if(level < 1)
+        return ['注意','#ff8'];
+
+    if(level < 2)
+        return ['危険','#fa4'];
+
+    if(level < 5)
+        return ['避難','#f44'];
+
+    return ['壊滅','#f0f'];
+}
+
+
+// ======================================
+// Flood Update
+// ======================================
+
 function updateFlood(level){
 
-    display.textContent = level.toFixed(1);
+    display.textContent =
+        level.toFixed(1);
 
-    const d = getDanger(level);
+    const d =
+        getDanger(level);
 
-    danger.textContent = d[0];
-    danger.style.color = d[1];
+    danger.textContent =
+        d[0];
+
+    danger.style.color =
+        d[1];
 
     for(const obj of allEntities){
 
-        const e = obj.entity;
+        const e =
+            obj.entity;
 
         if(level <= 0){
 
             e.show = false;
+
             continue;
         }
 
         e.show = true;
 
         const h =
-            Math.min(level,obj.maxDepth);
+            Math.min(
+                level,
+                obj.maxDepth
+            );
 
-        e.polygon.extrudedHeight = h;
+        e.polygon.extrudedHeight =
+            new Cesium.ConstantProperty(h);
     }
-
-    viewer.scene.requestRender();
 }
 
-slider.addEventListener('input',()=>{
+
+// ======================================
+// Slider
+// ======================================
+
+slider.addEventListener(
+    'input',
+    ()=>{
 
     updateFlood(
         parseFloat(slider.value)
@@ -324,14 +482,20 @@ slider.addEventListener('input',()=>{
 
 });
 
-let interval=null;
 
-document.getElementById('playBtn')
+// ======================================
+// Play
+// ======================================
+
+let interval = null;
+
+document
+.getElementById('playBtn')
 .addEventListener('click',()=>{
 
     if(interval) return;
 
-    interval=setInterval(()=>{
+    interval = setInterval(()=>{
 
         let v =
             parseFloat(slider.value);
@@ -343,10 +507,11 @@ document.getElementById('playBtn')
             v = 20;
 
             clearInterval(interval);
-            interval=null;
+
+            interval = null;
         }
 
-        slider.value=v;
+        slider.value = v;
 
         updateFlood(v);
 
@@ -354,27 +519,47 @@ document.getElementById('playBtn')
 
 });
 
-document.getElementById('stopBtn')
+
+// ======================================
+// Stop
+// ======================================
+
+document
+.getElementById('stopBtn')
 .addEventListener('click',()=>{
 
     clearInterval(interval);
-    interval=null;
+
+    interval = null;
 });
 
-document.getElementById('resetBtn')
+
+// ======================================
+// Reset
+// ======================================
+
+document
+.getElementById('resetBtn')
 .addEventListener('click',()=>{
 
     clearInterval(interval);
-    interval=null;
 
-    slider.value=0;
+    interval = null;
+
+    slider.value = 0;
 
     updateFlood(0);
 });
 
-let firstPerson=false;
 
-document.getElementById('vrBtn')
+// ======================================
+// First Person
+// ======================================
+
+let firstPerson = false;
+
+document
+.getElementById('vrBtn')
 .addEventListener('click',()=>{
 
     firstPerson = !firstPerson;
@@ -382,28 +567,34 @@ document.getElementById('vrBtn')
     if(firstPerson){
 
         const carto =
-            Cesium.Cartographic.fromDegrees(
+            Cesium.Cartographic
+            .fromDegrees(
                 138.249,
                 36.401
             );
 
-        const h =
-            viewer.scene.globe.getHeight(carto) || 0;
+        const ground =
+            viewer.scene.globe
+            .getHeight(carto) || 0;
 
         viewer.camera.flyTo({
 
             destination:
-                Cesium.Cartesian3.fromDegrees(
+                Cesium.Cartesian3
+                .fromDegrees(
                     138.249,
                     36.401,
-                    h + 1.7
+                    ground + 1.7
                 ),
 
             orientation:{
+
                 heading:
-                    Cesium.Math.toRadians(90),
+                    Cesium.Math
+                    .toRadians(90),
 
                 pitch:0,
+
                 roll:0
             },
 
@@ -413,80 +604,91 @@ document.getElementById('vrBtn')
     }else{
 
         viewer.camera.flyTo({
-
-            destination:
-                Cesium.Cartesian3.fromDegrees(
-                    138.249,
-                    36.401,
-                    6000
-                ),
-
-            orientation:{
-                heading:0,
-                pitch:
-                    Cesium.Math.toRadians(-45),
-                roll:0
-            },
-
+            ...DEFAULT_CAMERA,
             duration:2
         });
     }
 });
 
-let last=performance.now();
-let frames=0;
 
-function fpsCounter(){
+// ======================================
+// WASD Move
+// ======================================
+
+const keys = {};
+
+window.addEventListener(
+    'keydown',
+    e=>{
+        keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener(
+    'keyup',
+    e=>{
+        keys[e.key.toLowerCase()] = false;
+});
+
+viewer.clock.onTick
+.addEventListener(()=>{
+
+    if(!firstPerson)
+        return;
+
+    const speed =
+        keys['shift'] ? 4 : 1.5;
+
+    if(keys['w'])
+        viewer.camera.moveForward(speed);
+
+    if(keys['s'])
+        viewer.camera.moveBackward(speed);
+
+    if(keys['a'])
+        viewer.camera.moveLeft(speed);
+
+    if(keys['d'])
+        viewer.camera.moveRight(speed);
+
+});
+
+
+// ======================================
+// FPS
+// ======================================
+
+let frames = 0;
+
+let last = performance.now();
+
+function fpsLoop(){
 
     frames++;
 
-    const now=performance.now();
+    const now =
+        performance.now();
 
-    if(now-last>1000){
+    if(now - last >= 1000){
 
-        document.getElementById('fps')
+        document
+        .getElementById('fps')
         .textContent =
             `FPS: ${frames}`;
 
-        frames=0;
-        last=now;
+        frames = 0;
+
+        last = now;
     }
 
-    requestAnimationFrame(fpsCounter);
+    requestAnimationFrame(fpsLoop);
 }
 
-fpsCounter();
+fpsLoop();
 
-const keys={};
 
-window.addEventListener('keydown',e=>{
-    keys[e.key.toLowerCase()] = true;
-});
-
-window.addEventListener('keyup',e=>{
-    keys[e.key.toLowerCase()] = false;
-});
-
-viewer.clock.onTick.addEventListener(()=>{
-
-    if(!firstPerson) return;
-
-    const moveRate =
-        keys['shift'] ? 3 : 1;
-
-    if(keys['w'])
-        viewer.camera.moveForward(moveRate);
-
-    if(keys['s'])
-        viewer.camera.moveBackward(moveRate);
-
-    if(keys['a'])
-        viewer.camera.moveLeft(moveRate);
-
-    if(keys['d'])
-        viewer.camera.moveRight(moveRate);
-
-});
+// ======================================
+// Initial
+// ======================================
 
 updateFlood(0);
 
