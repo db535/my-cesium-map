@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>My Cesium Map</title>
+  <title>Plateau + Cesium</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
   <style>
@@ -14,9 +14,28 @@
 </head>
 <body>
   <div id="cesiumContainer"></div>
-  <script>
+  <script type="module">
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
-    const viewer = new Cesium.Viewer('cesiumContainer');
+
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: await Cesium.createWorldTerrainAsync(),
+    });
+
+    // Plateau を追加
+    const tileset = viewer.scene.primitives.add(
+  await Cesium.Cesium3DTileset.fromIonAssetId(2602291),
+);
+
+
+    // 東京にカメラを移動
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(139.75, 35.68, 3000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-45),
+        roll: 0
+      }
+    });
   </script>
 </body>
 </html>
