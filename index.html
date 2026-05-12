@@ -34,6 +34,10 @@
       await Cesium.Cesium3DTileset.fromIonAssetId(96188)
     );
 
+    // 陰影をつけてリアルに
+    viewer.scene.globe.enableLighting = true;
+    viewer.shadows = true;
+
 
     // 上田市にカメラを移動
     viewer.camera.flyTo({
