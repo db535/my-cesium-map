@@ -184,7 +184,10 @@
     let loaded = 0;
     for (const file of geojsonFiles) {
       try {
-        const ds = await Cesium.GeoJsonDataSource.load(`./data/${file}`, {
+        const response = await fetch(`./data/${file}`);
+        const geojson = await response.json();
+        delete geojson.crs; // EPSG:6668はCesiumが未対応のため削除
+        const ds = await Cesium.GeoJsonDataSource.load(geojson, {
           clampToGround: true,
         });
 
