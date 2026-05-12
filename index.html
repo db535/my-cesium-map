@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>上田市 洪水シミュレーション Ultimate</title>
+<title>上田市 洪水シミュレーション</title>
 
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
 
@@ -196,6 +196,7 @@ const viewer = new Cesium.Viewer(
 
 viewer.scene.globe.enableLighting = true;
 
+// 超重要
 viewer.scene.globe.depthTestAgainstTerrain = false;
 
 viewer.scene.highDynamicRange = true;
@@ -283,16 +284,6 @@ const geojsonFiles = [
 
 
 // =====================================
-// WATER COLOR
-// =====================================
-
-function waterColor(depth){
-
-    return Cesium.Color.BLUE.withAlpha(0.95);
-}
-
-
-// =====================================
 // DEPTH MAP
 // =====================================
 
@@ -304,6 +295,28 @@ const depthMap = {
     4:3.5,
     5:7.5
 };
+
+
+// =====================================
+// WATER COLOR
+// =====================================
+
+function waterColor(depth){
+
+    if(depth <= 0.5)
+        return Cesium.Color.CYAN.withAlpha(0.6);
+
+    if(depth <= 1.0)
+        return Cesium.Color.DEEPSKYBLUE.withAlpha(0.65);
+
+    if(depth <= 2.0)
+        return Cesium.Color.BLUE.withAlpha(0.7);
+
+    if(depth <= 5.0)
+        return Cesium.Color.DARKBLUE.withAlpha(0.75);
+
+    return Cesium.Color.NAVY.withAlpha(0.8);
+}
 
 
 // =====================================
@@ -323,7 +336,11 @@ for(const file of geojsonFiles){
 
         const ds =
             await Cesium.GeoJsonDataSource.load(
-                `./data/${file}`
+                `./data/${file}`,
+                {
+
+                    clampToGround:true
+                }
             );
 
         for(const entity of ds.entities.values){
@@ -343,11 +360,6 @@ for(const file of geojsonFiles){
                 waterColor(depth);
 
             entity.polygon.outline = false;
-
-            // 超重要
-            entity.polygon.height = 0.2;
-
-            entity.polygon.extrudedHeight = 0.2;
 
             entity.show = false;
 
@@ -432,8 +444,7 @@ function updateFlood(level){
 
     for(const obj of allEntities){
 
-        const e =
-            obj.entity;
+        const e = obj.entity;
 
         if(level <= 0){
 
@@ -442,16 +453,14 @@ function updateFlood(level){
             continue;
         }
 
-        e.show = true;
+        if(level >= obj.maxDepth){
 
-        const h =
-            Math.min(
-                level,
-                obj.maxDepth
-            );
+            e.show = true;
 
-        e.polygon.extrudedHeight =
-            h + 0.2;
+        }else{
+
+            e.show = false;
+        }
     }
 }
 
