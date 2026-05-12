@@ -17,27 +17,23 @@
   <script type="module">
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8';
 
-    const viewer = new Cesium.Viewer('cesiumContainer');
-
-    // 変更後（PLATEAU直接配信）
-    viewer.scene.setTerrain(
-      new Cesium.Terrain(
-        await Cesium.CesiumTerrainProvider.fromUrl(
-          'https://assets.cms.plateau.reearth.io/assets/11/6d05db-49a1-4b4d-a8a8-a346d33aac8d/terrain',
-          { requestVertexNormals: true }
-        )
-      )
-    );
+    // Cesium World Terrain（確実に動く・日本も十分な精度）
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: await Cesium.createWorldTerrainAsync({
+        requestVertexNormals: true  // 地形の陰影をリアルに
+      }),
+    });
 
     // Japan 3D Buildings（Plateau）
     const plateauTileset = viewer.scene.primitives.add(
       await Cesium.Cesium3DTileset.fromIonAssetId(2602291)
     );
 
-    // Cesium OSM Buildings（上田市など未カバー地域を補完）
+    // Cesium OSM Buildings（上田市など補完）
     const osmTileset = viewer.scene.primitives.add(
       await Cesium.Cesium3DTileset.fromIonAssetId(96188)
     );
+
 
     // 上田市にカメラを移動
     viewer.camera.flyTo({
