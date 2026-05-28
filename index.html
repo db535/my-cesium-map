@@ -2,74 +2,68 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>VR風 洪水避難ゲーム - Cesium Prototype</title>
+  <title>VR風 洪水避難ゲーム</title>
 
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Cesium.js"></script>
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
   <style>
-    html,
-    body,
-    #cesiumContainer {
+    html, body, #cesiumContainer {
       width: 100%;
       height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: #000;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, sans-serif;
     }
 
     #hud {
       position: absolute;
-      top: 14px;
-      left: 14px;
+      top: 16px;
+      left: 16px;
       z-index: 10;
-      width: 320px;
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(5, 10, 18, 0.82);
+      width: 330px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(5, 10, 18, 0.86);
       color: white;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(8px);
-      user-select: none;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.5);
     }
 
     #hud h1 {
       margin: 0 0 8px;
-      font-size: 18px;
-      line-height: 1.35;
+      font-size: 20px;
     }
 
     #hud p {
       margin: 6px 0;
       font-size: 13px;
       line-height: 1.5;
-      color: rgba(255, 255, 255, 0.86);
+      color: rgba(255,255,255,0.85);
     }
 
-    .meter {
-      margin-top: 10px;
-      height: 12px;
+    #waterMeter {
+      margin-top: 12px;
+      height: 14px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255,255,255,0.14);
       overflow: hidden;
     }
 
     #waterBar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #28c4ff, #1f6fff, #ff3d3d);
-      transition: width 0.12s linear;
+      background: linear-gradient(90deg, #00c8ff, #226cff, #ff3333);
     }
 
     #status {
-      margin-top: 10px;
-      padding: 9px 10px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.08);
-      font-size: 13px;
-      line-height: 1.5;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      font-size: 14px;
+      line-height: 1.6;
     }
 
     #centerMessage {
@@ -79,36 +73,31 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
     }
 
     #messageBox {
-      max-width: 620px;
-      padding: 28px;
-      border-radius: 24px;
-      background: rgba(4, 8, 15, 0.86);
+      width: min(620px, calc(100vw - 36px));
+      padding: 30px;
+      border-radius: 26px;
+      background: rgba(4, 8, 15, 0.9);
       color: white;
       text-align: center;
-      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(10px);
-      pointer-events: auto;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.65);
     }
 
     #messageBox h2 {
-      margin: 0 0 10px;
-      font-size: 28px;
+      margin: 0 0 12px;
+      font-size: 30px;
     }
 
     #messageBox p {
-      margin: 8px 0;
       line-height: 1.7;
-      color: rgba(255, 255, 255, 0.86);
+      color: rgba(255,255,255,0.85);
     }
 
-    #startButton,
-    #restartButton {
+    button {
       margin-top: 16px;
-      padding: 12px 18px;
+      padding: 13px 22px;
       border: none;
       border-radius: 999px;
       background: #2f80ed;
@@ -118,19 +107,18 @@
       cursor: pointer;
     }
 
-    #startButton:hover,
-    #restartButton:hover {
-      background: #1e6ed0;
+    button:hover {
+      background: #1d6fd2;
     }
 
     #crosshair {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 18px;
-      height: 18px;
-      z-index: 9;
+      width: 22px;
+      height: 22px;
       transform: translate(-50%, -50%);
+      z-index: 9;
       pointer-events: none;
     }
 
@@ -138,25 +126,25 @@
     #crosshair::after {
       content: "";
       position: absolute;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+      background: white;
+      box-shadow: 0 0 8px black;
     }
 
     #crosshair::before {
-      width: 18px;
+      width: 22px;
       height: 2px;
       left: 0;
-      top: 8px;
+      top: 10px;
     }
 
     #crosshair::after {
       width: 2px;
-      height: 18px;
-      left: 8px;
+      height: 22px;
+      left: 10px;
       top: 0;
     }
 
-    #mobileControls {
+    #controls {
       position: absolute;
       left: 18px;
       bottom: 18px;
@@ -165,43 +153,26 @@
       grid-template-columns: 58px 58px 58px;
       grid-template-rows: 58px 58px;
       gap: 8px;
-      user-select: none;
     }
 
-    .controlBtn {
+    .pad {
       border: none;
       border-radius: 18px;
-      background: rgba(255, 255, 255, 0.16);
+      background: rgba(255,255,255,0.18);
       color: white;
       font-size: 22px;
       font-weight: 900;
-      backdrop-filter: blur(8px);
       touch-action: none;
     }
 
-    .controlBtn:active {
-      background: rgba(47, 128, 237, 0.75);
+    .pad:active {
+      background: rgba(47,128,237,0.8);
     }
 
-    #btnForward {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    #btnLeft {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    #btnBack {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    #btnRight {
-      grid-column: 3;
-      grid-row: 2;
-    }
+    #up { grid-column: 2; grid-row: 1; }
+    #left { grid-column: 1; grid-row: 2; }
+    #down { grid-column: 2; grid-row: 2; }
+    #right { grid-column: 3; grid-row: 2; }
 
     #lookControls {
       position: absolute;
@@ -212,52 +183,24 @@
       grid-template-columns: 58px 58px 58px;
       grid-template-rows: 58px 58px;
       gap: 8px;
-      user-select: none;
     }
 
-    #btnLookUp {
-      grid-column: 2;
-      grid-row: 1;
-    }
+    #lookUp { grid-column: 2; grid-row: 1; }
+    #lookLeft { grid-column: 1; grid-row: 2; }
+    #lookDown { grid-column: 2; grid-row: 2; }
+    #lookRight { grid-column: 3; grid-row: 2; }
 
-    #btnLookLeft {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    #btnLookDown {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    #btnLookRight {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
-    #tip {
+    #debug {
       position: absolute;
-      right: 14px;
-      top: 14px;
+      right: 16px;
+      top: 16px;
       z-index: 10;
-      width: 300px;
       padding: 12px;
       border-radius: 14px;
-      background: rgba(5, 10, 18, 0.72);
-      color: rgba(255, 255, 255, 0.88);
+      background: rgba(0,0,0,0.6);
+      color: white;
       font-size: 12px;
-      line-height: 1.6;
-      backdrop-filter: blur(8px);
-    }
-
-    @media (max-width: 760px) {
-      #hud {
-        width: calc(100vw - 56px);
-      }
-
-      #tip {
-        display: none;
-      }
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -267,107 +210,61 @@
 
   <div id="hud">
     <h1>VR風 洪水避難ゲーム</h1>
-    <p>水が上がる前に、青い避難タワーまで逃げろ。</p>
-    <p>操作：WASD / 矢印キーで移動、マウスで視点変更。</p>
+    <p>水が上がる前に、青い避難タワーまで逃げてください。</p>
+    <p>PC：WASD / 矢印キー + マウス視点<br>スマホ：下のボタン</p>
 
-    <div class="meter">
+    <div id="waterMeter">
       <div id="waterBar"></div>
     </div>
 
     <div id="status">
-      時間：<span id="timeText">0.0</span> 秒<br />
-      水位：<span id="waterText">0.0</span> m<br />
-      ゴールまで：<span id="distanceText">---</span> m<br />
+      時間：<span id="timeText">0.0</span> 秒<br>
+      水位：<span id="waterText">0.0</span> m<br>
+      ゴールまで：<span id="distanceText">---</span> m<br>
       状態：<span id="stateText">待機中</span>
     </div>
   </div>
 
-  <div id="tip">
-    <b>VRっぽく遊ぶコツ</b><br />
-    1. 画面中央をクリックしてマウス視点操作<br />
-    2. 低い視点で街を歩く<br />
-    3. 水が来たら高い青いタワーへ逃げる<br />
-    4. Meta Quest等ではブラウザでGitHub Pagesを開く
+  <div id="debug">
+    画面クリック：マウス視点操作<br>
+    青い円柱：避難タワー<br>
+    半透明の青：洪水エリア
   </div>
 
   <div id="crosshair"></div>
 
-  <div id="mobileControls">
-    <button class="controlBtn" id="btnForward">▲</button>
-    <button class="controlBtn" id="btnLeft">◀</button>
-    <button class="controlBtn" id="btnBack">▼</button>
-    <button class="controlBtn" id="btnRight">▶</button>
+  <div id="controls">
+    <button class="pad" id="up">▲</button>
+    <button class="pad" id="left">◀</button>
+    <button class="pad" id="down">▼</button>
+    <button class="pad" id="right">▶</button>
   </div>
 
   <div id="lookControls">
-    <button class="controlBtn" id="btnLookUp">↑</button>
-    <button class="controlBtn" id="btnLookLeft">←</button>
-    <button class="controlBtn" id="btnLookDown">↓</button>
-    <button class="controlBtn" id="btnLookRight">→</button>
+    <button class="pad" id="lookUp">↑</button>
+    <button class="pad" id="lookLeft">←</button>
+    <button class="pad" id="lookDown">↓</button>
+    <button class="pad" id="lookRight">→</button>
   </div>
 
   <div id="centerMessage">
     <div id="messageBox">
       <h2>水が来る。逃げろ。</h2>
       <p>
-        あなたは洪水警報が出た街にいます。<br />
-        水位が上がる前に、青い避難タワーまで移動してください。
+        あなたは洪水警報が出た街にいます。<br>
+        水位が上がる前に、青い避難タワーへ逃げてください。
       </p>
       <p>
-        PC：WASD / 矢印キー + マウス<br />
-        スマホ・Questブラウザ：画面下のボタン
+        操作：WASD / 矢印キーで移動、マウスで視点変更。
       </p>
       <button id="startButton">開始する</button>
     </div>
   </div>
 
   <script>
-    // ============================================================
-    // 0. 基本設定
-    // ============================================================
-
-    // 上田市付近を想定したローカルなゲーム空間
-    const startLon = 138.2492;
-    const startLat = 36.4023;
-
-    const goalLon = 138.2548;
-    const goalLat = 36.4071;
-
-    let playerLon = startLon;
-    let playerLat = startLat;
-    let playerHeight = 1.75;
-
-    let heading = Cesium.Math.toRadians(42);
-    let pitch = Cesium.Math.toRadians(-5);
-
-    let gameStarted = false;
-    let gameOver = false;
-    let gameClear = false;
-
-    let elapsedSec = 0;
-    let waterHeight = 0;
-
-    const walkSpeed = 3.2; // m/s。ゲームなので少し速め
-    const maxWaterHeight = 4.5;
-    const dangerWaterHeight = 1.15;
-    const goalRadiusMeters = 26;
-
-    const keys = {};
-    const virtualKeys = {};
-
-    const timeText = document.getElementById("timeText");
-    const waterText = document.getElementById("waterText");
-    const distanceText = document.getElementById("distanceText");
-    const stateText = document.getElementById("stateText");
-    const waterBar = document.getElementById("waterBar");
-    const centerMessage = document.getElementById("centerMessage");
-    const messageBox = document.getElementById("messageBox");
-    const startButton = document.getElementById("startButton");
-
-    // ============================================================
-    // 1. Cesium Viewer
-    // ============================================================
-
+    // =========================
+    // Cesium 初期化
+    // =========================
     const viewer = new Cesium.Viewer("cesiumContainer", {
       animation: false,
       timeline: false,
@@ -384,364 +281,204 @@
     });
 
     viewer.scene.globe.depthTestAgainstTerrain = true;
-    viewer.scene.skyAtmosphere.show = true;
-    viewer.scene.globe.enableLighting = true;
 
-    // デフォルトのマウス地図操作を切る。自前FPS操作にする
+    // 自前FPS操作にするため、標準カメラ操作をOFF
     viewer.scene.screenSpaceCameraController.enableRotate = false;
     viewer.scene.screenSpaceCameraController.enableTranslate = false;
     viewer.scene.screenSpaceCameraController.enableZoom = false;
     viewer.scene.screenSpaceCameraController.enableTilt = false;
     viewer.scene.screenSpaceCameraController.enableLook = false;
 
-    // 最初の視点
+    // =========================
+    // ゲーム状態
+    // =========================
+    const startLon = 138.2492;
+    const startLat = 36.4023;
+    const goalLon = 138.2548;
+    const goalLat = 36.4071;
+
+    let playerLon = startLon;
+    let playerLat = startLat;
+    let playerHeight = 2.0;
+
+    let heading = Cesium.Math.toRadians(40);
+    let pitch = Cesium.Math.toRadians(-4);
+
+    let gameStarted = false;
+    let gameOver = false;
+    let gameClear = false;
+
+    let elapsedSec = 0;
+    let waterHeight = 0;
+
+    const walkSpeed = 3.4;
+    const maxWaterHeight = 4.6;
+    const dangerWaterHeight = 1.1;
+    const goalRadiusMeters = 28;
+
+    const keys = {};
+    const pad = {};
+
+    const centerMessage = document.getElementById("centerMessage");
+    const messageBox = document.getElementById("messageBox");
+    const startButton = document.getElementById("startButton");
+
+    const timeText = document.getElementById("timeText");
+    const waterText = document.getElementById("waterText");
+    const distanceText = document.getElementById("distanceText");
+    const stateText = document.getElementById("stateText");
+    const waterBar = document.getElementById("waterBar");
+
+    // =========================
+    // シーン作成
+    // =========================
+    createWorld();
     setCamera();
 
-    // ============================================================
-    // 2. 地面・避難タワー・ビル群
-    // ============================================================
-
-    // ゲームエリアの地面
-    viewer.entities.add({
-      name: "ゲームエリア",
-      polygon: {
-        hierarchy: Cesium.Cartesian3.fromDegreesArray([
-          138.2440, 36.3975,
-          138.2605, 36.3975,
-          138.2605, 36.4115,
-          138.2440, 36.4115
-        ]),
-        material: Cesium.Color.fromBytes(38, 47, 42, 210),
-        outline: true,
-        outlineColor: Cesium.Color.fromBytes(130, 160, 140, 220)
-      }
-    });
-
-    // 道路っぽいライン
-    addRoad([
-      [138.2460, 36.3990],
-      [138.2492, 36.4023],
-      [138.2522, 36.4044],
-      [138.2548, 36.4071]
-    ], Cesium.Color.fromBytes(80, 80, 80, 255), 12);
-
-    addRoad([
-      [138.2470, 36.4068],
-      [138.2502, 36.4049],
-      [138.2558, 36.4032]
-    ], Cesium.Color.fromBytes(70, 70, 70, 255), 10);
-
-    addRoad([
-      [138.2515, 36.3988],
-      [138.2512, 36.4022],
-      [138.2515, 36.4078]
-    ], Cesium.Color.fromBytes(65, 65, 65, 255), 9);
-
-    // ビル群
-    createCityBlocks();
-
-    // 避難タワー
-    addTower(goalLon, goalLat);
-
-    // スタート地点
-    viewer.entities.add({
-      name: "スタート",
-      position: Cesium.Cartesian3.fromDegrees(startLon, startLat, 2),
-      cylinder: {
-        length: 4,
-        topRadius: 3,
-        bottomRadius: 3,
-        material: Cesium.Color.RED.withAlpha(0.85)
-      },
-      label: {
-        text: "START",
-        font: "bold 16px sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -36)
-      }
-    });
-
-    // 目標ライン
-    addRoad([
-      [startLon, startLat],
-      [138.2505, 36.4036],
-      [138.2528, 36.4051],
-      [goalLon, goalLat]
-    ], Cesium.Color.LIME.withAlpha(0.95), 5);
-
-    // ============================================================
-    // 3. 洪水エリアと水表現
-    // ============================================================
-
-    const floodPolygon = [
-      138.2452, 36.3984,
-      138.2587, 36.3985,
-      138.2598, 36.4055,
-      138.2562, 36.4105,
-      138.2472, 36.4096,
-      138.2446, 36.4042
-    ];
-
-    const waterMaterial = new Cesium.ColorMaterialProperty(
-      new Cesium.CallbackProperty(() => {
-        const pulse = 0.46 + Math.sin(performance.now() * 0.004) * 0.08;
-        return new Cesium.Color(0.02, 0.35 + pulse * 0.1, 0.72, pulse);
-      }, false)
-    );
-
-    viewer.entities.add({
-      name: "上昇する洪水",
-      polygon: {
-        hierarchy: Cesium.Cartesian3.fromDegreesArray(floodPolygon),
-        height: new Cesium.CallbackProperty(() => waterHeight, false),
-        extrudedHeight: 0,
-        material: waterMaterial,
-        outline: true,
-        outlineColor: Cesium.Color.CYAN.withAlpha(0.9)
-      }
-    });
-
-    // 波っぽい線を何本か
-    for (let i = 0; i < 11; i++) {
-      addWaveLine(i);
-    }
-
-    // ============================================================
-    // 4. 入力
-    // ============================================================
-
-    window.addEventListener("keydown", (e) => {
-      keys[e.key.toLowerCase()] = true;
-    });
-
-    window.addEventListener("keyup", (e) => {
-      keys[e.key.toLowerCase()] = false;
-    });
-
-    document.body.addEventListener("click", () => {
-      if (gameStarted && !gameOver && !gameClear) {
-        document.body.requestPointerLock?.();
-      }
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (document.pointerLockElement === document.body) {
-        heading += e.movementX * 0.0022;
-        pitch -= e.movementY * 0.0018;
-        pitch = clamp(pitch, Cesium.Math.toRadians(-45), Cesium.Math.toRadians(18));
-      }
-    });
-
-    bindButton("btnForward", "forward");
-    bindButton("btnBack", "back");
-    bindButton("btnLeft", "left");
-    bindButton("btnRight", "right");
-
-    bindButton("btnLookUp", "lookUp");
-    bindButton("btnLookDown", "lookDown");
-    bindButton("btnLookLeft", "lookLeft");
-    bindButton("btnLookRight", "lookRight");
-
-    startButton.addEventListener("click", () => {
-      startGame();
-    });
-
-    // ============================================================
-    // 5. ゲームループ
-    // ============================================================
-
-    let lastTime = performance.now();
-
-    viewer.clock.onTick.addEventListener(() => {
-      const now = performance.now();
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime = now;
-
-      if (!gameStarted || gameOver || gameClear) {
-        setCamera();
-        updateHud();
-        return;
-      }
-
-      elapsedSec += dt;
-
-      // 水位上昇。最初はゆっくり、後半で速く
-      waterHeight = Math.min(maxWaterHeight, 0.12 * elapsedSec + 0.006 * elapsedSec * elapsedSec);
-
-      updateLookByButtons(dt);
-      updatePlayer(dt);
-      setCamera();
-      checkGameState();
-      updateHud();
-    });
-
-    // ============================================================
-    // 関数群
-    // ============================================================
-
-    function startGame() {
-      gameStarted = true;
-      gameOver = false;
-      gameClear = false;
-      elapsedSec = 0;
-      waterHeight = 0;
-
-      playerLon = startLon;
-      playerLat = startLat;
-      heading = Cesium.Math.toRadians(42);
-      pitch = Cesium.Math.toRadians(-5);
-
-      centerMessage.style.display = "none";
-      stateText.textContent = "避難中";
-      setCamera();
-
-      setTimeout(() => {
-        document.body.requestPointerLock?.();
-      }, 150);
-    }
-
-    function restartGame() {
-      centerMessage.style.display = "flex";
-      messageBox.innerHTML = `
-        <h2>もう一度挑戦</h2>
-        <p>水が来る前に青い避難タワーへ逃げてください。</p>
-        <button id="restartButton">再スタート</button>
-      `;
-
-      document.getElementById("restartButton").addEventListener("click", () => {
-        startGame();
-      });
-    }
-
-    function updatePlayer(dt) {
-      let forward = 0;
-      let strafe = 0;
-
-      if (keys["w"] || keys["arrowup"] || virtualKeys.forward) forward += 1;
-      if (keys["s"] || keys["arrowdown"] || virtualKeys.back) forward -= 1;
-      if (keys["a"] || keys["arrowleft"] || virtualKeys.left) strafe -= 1;
-      if (keys["d"] || keys["arrowright"] || virtualKeys.right) strafe += 1;
-
-      const len = Math.hypot(forward, strafe);
-      if (len > 0) {
-        forward /= len;
-        strafe /= len;
-      }
-
-      const speed = walkSpeed * dt;
-
-      // heading 0 = 北、右方向は東
-      const dNorth = speed * (forward * Math.cos(heading) - strafe * Math.sin(heading));
-      const dEast = speed * (forward * Math.sin(heading) + strafe * Math.cos(heading));
-
-      const metersPerDegLat = 111320;
-      const metersPerDegLon = 111320 * Math.cos(Cesium.Math.toRadians(playerLat));
-
-      playerLat += dNorth / metersPerDegLat;
-      playerLon += dEast / metersPerDegLon;
-
-      // ゲームエリアから出すぎないように制限
-      playerLon = clamp(playerLon, 138.2445, 138.2600);
-      playerLat = clamp(playerLat, 36.3980, 36.4110);
-    }
-
-    function updateLookByButtons(dt) {
-      const lookSpeed = 1.8 * dt;
-
-      if (virtualKeys.lookLeft) heading -= lookSpeed;
-      if (virtualKeys.lookRight) heading += lookSpeed;
-      if (virtualKeys.lookUp) pitch += lookSpeed * 0.55;
-      if (virtualKeys.lookDown) pitch -= lookSpeed * 0.55;
-
-      pitch = clamp(pitch, Cesium.Math.toRadians(-45), Cesium.Math.toRadians(18));
-    }
-
-    function setCamera() {
-      viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(playerLon, playerLat, playerHeight),
-        orientation: {
-          heading,
-          pitch,
-          roll: 0
+    function createWorld() {
+      // 地面
+      viewer.entities.add({
+        polygon: {
+          hierarchy: Cesium.Cartesian3.fromDegreesArray([
+            138.2440, 36.3975,
+            138.2610, 36.3975,
+            138.2610, 36.4120,
+            138.2440, 36.4120
+          ]),
+          material: Cesium.Color.fromBytes(35, 48, 42, 230),
+          outline: true,
+          outlineColor: Cesium.Color.WHITE.withAlpha(0.25)
         }
       });
-    }
 
-    function checkGameState() {
-      const distanceToGoal = distanceMeters(playerLon, playerLat, goalLon, goalLat);
-      const inFlood = pointInPolygon(playerLon, playerLat, toPairs(floodPolygon));
+      // 道
+      addRoad([
+        [138.2460, 36.3990],
+        [138.2492, 36.4023],
+        [138.2522, 36.4044],
+        [138.2548, 36.4071]
+      ], Cesium.Color.LIME.withAlpha(0.95), 6);
 
-      if (distanceToGoal <= goalRadiusMeters) {
-        gameClear = true;
-        gameStarted = false;
-        document.exitPointerLock?.();
+      addRoad([
+        [138.2460, 36.3990],
+        [138.2492, 36.4023],
+        [138.2522, 36.4044],
+        [138.2548, 36.4071]
+      ], Cesium.Color.fromBytes(70, 70, 70, 255), 18);
 
-        centerMessage.style.display = "flex";
-        messageBox.innerHTML = `
-          <h2>避難成功！</h2>
-          <p>水位 ${waterHeight.toFixed(1)} m の時点で避難タワーに到着しました。</p>
-          <p>次は、水位上昇を速くしたり、ルートを複雑にするとゲーム性が上がります。</p>
-          <button id="restartButton">もう一度遊ぶ</button>
-        `;
+      addRoad([
+        [138.2470, 36.4068],
+        [138.2502, 36.4049],
+        [138.2558, 36.4032]
+      ], Cesium.Color.fromBytes(65, 65, 65, 255), 12);
 
-        document.getElementById("restartButton").addEventListener("click", () => {
-          startGame();
-        });
+      addRoad([
+        [138.2515, 36.3988],
+        [138.2512, 36.4022],
+        [138.2515, 36.4078]
+      ], Cesium.Color.fromBytes(65, 65, 65, 255), 12);
 
-        return;
-      }
+      // 建物
+      const buildings = [
+        [138.2470, 36.4000, 20, 24, 24, 0],
+        [138.2487, 36.4008, 12, 22, 32, 20],
+        [138.2506, 36.4016, 28, 20, 22, 40],
+        [138.2522, 36.4025, 18, 32, 20, 15],
+        [138.2538, 36.4036, 24, 22, 28, 45],
+        [138.2555, 36.4048, 16, 30, 22, 10],
+        [138.2480, 36.4052, 22, 22, 22, 0],
+        [138.2504, 36.4064, 30, 22, 28, 35],
+        [138.2528, 36.4070, 18, 25, 20, 20],
+        [138.2565, 36.4068, 28, 24, 24, 50],
+        [138.2470, 36.4082, 16, 30, 18, 10],
+        [138.2497, 36.4090, 24, 22, 22, 25],
+        [138.2526, 36.4093, 20, 30, 22, 5],
+        [138.2573, 36.4087, 26, 22, 26, 40]
+      ];
 
-      if (inFlood && waterHeight >= dangerWaterHeight) {
-        gameOver = true;
-        gameStarted = false;
-        document.exitPointerLock?.();
+      buildings.forEach((b, i) => {
+        addBuilding(...b, i);
+      });
 
-        centerMessage.style.display = "flex";
-        messageBox.innerHTML = `
-          <h2>避難失敗</h2>
-          <p>水位が ${waterHeight.toFixed(1)} m に達し、浸水エリア内で危険状態になりました。</p>
-          <p>次は、緑の誘導ラインを見ながら早めに避難してください。</p>
-          <button id="restartButton">もう一度挑戦する</button>
-        `;
-
-        document.getElementById("restartButton").addEventListener("click", () => {
-          startGame();
-        });
-      }
-    }
-
-    function updateHud() {
-      const distanceToGoal = distanceMeters(playerLon, playerLat, goalLon, goalLat);
-
-      timeText.textContent = elapsedSec.toFixed(1);
-      waterText.textContent = waterHeight.toFixed(1);
-      distanceText.textContent = Math.max(0, distanceToGoal).toFixed(0);
-
-      const ratio = Math.min(100, (waterHeight / maxWaterHeight) * 100);
-      waterBar.style.width = `${ratio}%`;
-
-      if (gameClear) {
-        stateText.textContent = "避難成功";
-        stateText.style.color = "#7cff9e";
-      } else if (gameOver) {
-        stateText.textContent = "危険";
-        stateText.style.color = "#ff6a6a";
-      } else if (gameStarted) {
-        const inFlood = pointInPolygon(playerLon, playerLat, toPairs(floodPolygon));
-
-        if (inFlood && waterHeight > 0.5) {
-          stateText.textContent = "浸水域内：急いで避難";
-          stateText.style.color = "#ffd36a";
-        } else {
-          stateText.textContent = "避難中";
-          stateText.style.color = "#ffffff";
+      // 避難タワー
+      viewer.entities.add({
+        name: "避難タワー",
+        position: Cesium.Cartesian3.fromDegrees(goalLon, goalLat, 22),
+        cylinder: {
+          length: 44,
+          topRadius: 8,
+          bottomRadius: 8,
+          material: Cesium.Color.ROYALBLUE.withAlpha(0.96),
+          outline: true,
+          outlineColor: Cesium.Color.WHITE
+        },
+        label: {
+          text: "避難タワー",
+          font: "bold 20px sans-serif",
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 4,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -60)
         }
-      } else {
-        stateText.textContent = "待機中";
-        stateText.style.color = "#ffffff";
+      });
+
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(goalLon, goalLat, 48),
+        ellipsoid: {
+          radii: new Cesium.Cartesian3(22, 22, 22),
+          material: Cesium.Color.CYAN.withAlpha(0.22),
+          outline: true,
+          outlineColor: Cesium.Color.CYAN
+        }
+      });
+
+      // 洪水
+      const floodPolygon = [
+        138.2452, 36.3984,
+        138.2590, 36.3985,
+        138.2600, 36.4055,
+        138.2564, 36.4106,
+        138.2472, 36.4098,
+        138.2446, 36.4042
+      ];
+
+      viewer.entities.add({
+        name: "洪水",
+        polygon: {
+          hierarchy: Cesium.Cartesian3.fromDegreesArray(floodPolygon),
+          height: new Cesium.CallbackProperty(() => waterHeight, false),
+          extrudedHeight: 0,
+          material: new Cesium.ColorMaterialProperty(
+            new Cesium.CallbackProperty(() => {
+              const pulse = 0.45 + Math.sin(performance.now() * 0.004) * 0.08;
+              return new Cesium.Color(0.02, 0.38, 0.9, pulse);
+            }, false)
+          ),
+          outline: true,
+          outlineColor: Cesium.Color.CYAN
+        }
+      });
+
+      // 水面の波線
+      for (let i = 0; i < 12; i++) {
+        viewer.entities.add({
+          polyline: {
+            positions: new Cesium.CallbackProperty(() => {
+              const t = performance.now() * 0.001;
+              const pts = [];
+              const baseLat = 36.3992 + i * 0.0009;
+              for (let k = 0; k < 18; k++) {
+                const lon = 138.2460 + k * 0.0007;
+                const lat = baseLat + Math.sin(k * 0.9 + t * 2 + i) * 0.00008;
+                pts.push(lon, lat, waterHeight + 0.15);
+              }
+              return Cesium.Cartesian3.fromDegreesArrayHeights(pts);
+            }, false),
+            width: 2,
+            material: Cesium.Color.WHITE.withAlpha(0.25)
+          }
+        });
       }
     }
 
@@ -756,183 +493,272 @@
       });
     }
 
-    function addTower(lon, lat) {
-      viewer.entities.add({
-        name: "避難タワー",
-        position: Cesium.Cartesian3.fromDegrees(lon, lat, 18),
-        cylinder: {
-          length: 36,
-          topRadius: 7,
-          bottomRadius: 7,
-          material: Cesium.Color.ROYALBLUE.withAlpha(0.95),
-          outline: true,
-          outlineColor: Cesium.Color.WHITE
-        },
-        label: {
-          text: "避難タワー",
-          font: "bold 18px sans-serif",
-          fillColor: Cesium.Color.WHITE,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 4,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(0, -54)
-        }
-      });
+    function addBuilding(lon, lat, height, x, y, rot, index) {
+      const pos = Cesium.Cartesian3.fromDegrees(lon, lat, height / 2);
+      const hpr = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(rot), 0, 0);
 
-      viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lon, lat, 40),
-        ellipsoid: {
-          radii: new Cesium.Cartesian3(18, 18, 18),
-          material: Cesium.Color.CYAN.withAlpha(0.22),
-          outline: true,
-          outlineColor: Cesium.Color.CYAN
-        }
-      });
-    }
-
-    function createCityBlocks() {
-      const buildings = [
-        [138.2470, 36.4000, 16, 18, 20, 20],
-        [138.2485, 36.4006, 10, 24, 18, 35],
-        [138.2505, 36.4016, 22, 14, 16, 10],
-        [138.2520, 36.4024, 18, 18, 24, 45],
-        [138.2534, 36.4036, 12, 28, 20, 0],
-        [138.2554, 36.4046, 28, 16, 22, 30],
-        [138.2480, 36.4052, 20, 18, 18, 10],
-        [138.2505, 36.4064, 18, 20, 26, 55],
-        [138.2528, 36.4070, 14, 22, 18, 25],
-        [138.2562, 36.4068, 26, 18, 30, 35],
-        [138.2464, 36.4076, 12, 18, 16, 0],
-        [138.2492, 36.4085, 20, 16, 20, 20],
-        [138.2522, 36.4090, 16, 24, 22, 40],
-        [138.2575, 36.4088, 24, 16, 18, 5],
-        [138.2557, 36.4010, 18, 20, 20, 60],
-        [138.2572, 36.4022, 10, 30, 18, 20]
+      const colors = [
+        Cesium.Color.fromBytes(145, 145, 140, 245),
+        Cesium.Color.fromBytes(120, 135, 150, 245),
+        Cesium.Color.fromBytes(155, 130, 110, 245),
+        Cesium.Color.fromBytes(100, 110, 120, 245)
       ];
 
-      buildings.forEach((b, i) => {
-        const [lon, lat, h, sx, sy, deg] = b;
-        addBuilding(lon, lat, h, sx, sy, deg, i);
-      });
-    }
-
-    function addBuilding(lon, lat, height, sizeX, sizeY, headingDeg, index) {
-      const colorSet = [
-        Cesium.Color.fromBytes(150, 150, 145, 235),
-        Cesium.Color.fromBytes(120, 135, 150, 235),
-        Cesium.Color.fromBytes(165, 145, 125, 235),
-        Cesium.Color.fromBytes(100, 115, 125, 235)
-      ];
-
-      const hpr = new Cesium.HeadingPitchRoll(
-        Cesium.Math.toRadians(headingDeg),
-        0,
-        0
-      );
-
-      const position = Cesium.Cartesian3.fromDegrees(lon, lat, height / 2);
-
       viewer.entities.add({
-        position,
-        orientation: Cesium.Transforms.headingPitchRollQuaternion(position, hpr),
+        position: pos,
+        orientation: Cesium.Transforms.headingPitchRollQuaternion(pos, hpr),
         box: {
-          dimensions: new Cesium.Cartesian3(sizeX, sizeY, height),
-          material: colorSet[index % colorSet.length],
+          dimensions: new Cesium.Cartesian3(x, y, height),
+          material: colors[index % colors.length],
           outline: true,
-          outlineColor: Cesium.Color.fromBytes(230, 230, 230, 140)
+          outlineColor: Cesium.Color.WHITE.withAlpha(0.35)
         }
       });
     }
 
-    function addWaveLine(i) {
-      viewer.entities.add({
-        polyline: {
-          positions: new Cesium.CallbackProperty(() => {
-            const t = performance.now() * 0.001;
-            const baseLat = 36.3994 + i * 0.00095;
-            const offset = Math.sin(t * 1.4 + i) * 0.00012;
+    // =========================
+    // 入力
+    // =========================
+    window.addEventListener("keydown", e => {
+      keys[e.key.toLowerCase()] = true;
+    });
 
-            const pts = [];
-            for (let k = 0; k < 18; k++) {
-              const lon = 138.2460 + k * 0.00072;
-              const lat = baseLat + Math.sin(k * 0.9 + t * 2.0 + i) * 0.00009 + offset;
-              pts.push(lon, lat, waterHeight + 0.08);
-            }
+    window.addEventListener("keyup", e => {
+      keys[e.key.toLowerCase()] = false;
+    });
 
-            return Cesium.Cartesian3.fromDegreesArrayHeights(pts);
-          }, false),
-          width: 2,
-          material: Cesium.Color.WHITE.withAlpha(0.24)
-        }
-      });
-    }
+    document.body.addEventListener("click", () => {
+      if (gameStarted && !gameOver && !gameClear) {
+        document.body.requestPointerLock?.();
+      }
+    });
 
-    function bindButton(id, keyName) {
+    document.addEventListener("mousemove", e => {
+      if (document.pointerLockElement === document.body) {
+        heading += e.movementX * 0.0022;
+        pitch -= e.movementY * 0.0018;
+        pitch = clamp(pitch, Cesium.Math.toRadians(-45), Cesium.Math.toRadians(18));
+      }
+    });
+
+    bindPad("up", "forward");
+    bindPad("down", "back");
+    bindPad("left", "left");
+    bindPad("right", "right");
+
+    bindPad("lookUp", "lookUp");
+    bindPad("lookDown", "lookDown");
+    bindPad("lookLeft", "lookLeft");
+    bindPad("lookRight", "lookRight");
+
+    function bindPad(id, name) {
       const el = document.getElementById(id);
 
-      const down = (e) => {
+      el.addEventListener("pointerdown", e => {
         e.preventDefault();
-        virtualKeys[keyName] = true;
-      };
+        pad[name] = true;
+      });
 
-      const up = (e) => {
+      el.addEventListener("pointerup", e => {
         e.preventDefault();
-        virtualKeys[keyName] = false;
-      };
+        pad[name] = false;
+      });
 
-      el.addEventListener("pointerdown", down);
-      el.addEventListener("pointerup", up);
-      el.addEventListener("pointercancel", up);
-      el.addEventListener("pointerleave", up);
+      el.addEventListener("pointercancel", e => {
+        e.preventDefault();
+        pad[name] = false;
+      });
+
+      el.addEventListener("pointerleave", e => {
+        e.preventDefault();
+        pad[name] = false;
+      });
+    }
+
+    startButton.addEventListener("click", startGame);
+
+    // =========================
+    // ゲームループ
+    // =========================
+    let last = performance.now();
+
+    viewer.clock.onTick.addEventListener(() => {
+      const now = performance.now();
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+
+      if (!gameStarted || gameOver || gameClear) {
+        setCamera();
+        updateHud();
+        return;
+      }
+
+      elapsedSec += dt;
+
+      // 水位上昇
+      waterHeight = Math.min(maxWaterHeight, 0.10 * elapsedSec + 0.0065 * elapsedSec * elapsedSec);
+
+      updateLook(dt);
+      updatePlayer(dt);
+      setCamera();
+      checkState();
+      updateHud();
+    });
+
+    function startGame() {
+      gameStarted = true;
+      gameOver = false;
+      gameClear = false;
+
+      elapsedSec = 0;
+      waterHeight = 0;
+
+      playerLon = startLon;
+      playerLat = startLat;
+      heading = Cesium.Math.toRadians(40);
+      pitch = Cesium.Math.toRadians(-4);
+
+      centerMessage.style.display = "none";
+
+      setTimeout(() => {
+        document.body.requestPointerLock?.();
+      }, 100);
+    }
+
+    function updateLook(dt) {
+      const s = 1.9 * dt;
+
+      if (pad.lookLeft) heading -= s;
+      if (pad.lookRight) heading += s;
+      if (pad.lookUp) pitch += s * 0.55;
+      if (pad.lookDown) pitch -= s * 0.55;
+
+      pitch = clamp(pitch, Cesium.Math.toRadians(-45), Cesium.Math.toRadians(18));
+    }
+
+    function updatePlayer(dt) {
+      let f = 0;
+      let r = 0;
+
+      if (keys["w"] || keys["arrowup"] || pad.forward) f += 1;
+      if (keys["s"] || keys["arrowdown"] || pad.back) f -= 1;
+      if (keys["a"] || keys["arrowleft"] || pad.left) r -= 1;
+      if (keys["d"] || keys["arrowright"] || pad.right) r += 1;
+
+      const len = Math.hypot(f, r);
+      if (len > 0) {
+        f /= len;
+        r /= len;
+      }
+
+      const move = walkSpeed * dt;
+
+      const north = move * (f * Math.cos(heading) - r * Math.sin(heading));
+      const east = move * (f * Math.sin(heading) + r * Math.cos(heading));
+
+      const mLat = 111320;
+      const mLon = 111320 * Math.cos(Cesium.Math.toRadians(playerLat));
+
+      playerLat += north / mLat;
+      playerLon += east / mLon;
+
+      playerLon = clamp(playerLon, 138.2445, 138.2605);
+      playerLat = clamp(playerLat, 36.3980, 36.4115);
+    }
+
+    function setCamera() {
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(playerLon, playerLat, playerHeight),
+        orientation: {
+          heading,
+          pitch,
+          roll: 0
+        }
+      });
+    }
+
+    function checkState() {
+      const d = distanceMeters(playerLon, playerLat, goalLon, goalLat);
+      const inFlood = isInFloodArea(playerLon, playerLat);
+
+      if (d <= goalRadiusMeters) {
+        gameClear = true;
+        gameStarted = false;
+        document.exitPointerLock?.();
+
+        centerMessage.style.display = "flex";
+        messageBox.innerHTML = `
+          <h2>避難成功！</h2>
+          <p>水位 ${waterHeight.toFixed(1)} m の時点で避難タワーに到着しました。</p>
+          <button onclick="location.reload()">もう一度遊ぶ</button>
+        `;
+      }
+
+      if (inFlood && waterHeight >= dangerWaterHeight) {
+        gameOver = true;
+        gameStarted = false;
+        document.exitPointerLock?.();
+
+        centerMessage.style.display = "flex";
+        messageBox.innerHTML = `
+          <h2>避難失敗</h2>
+          <p>浸水エリア内で水位が ${waterHeight.toFixed(1)} m に達しました。</p>
+          <button onclick="location.reload()">もう一度挑戦する</button>
+        `;
+      }
+    }
+
+    function updateHud() {
+      const d = distanceMeters(playerLon, playerLat, goalLon, goalLat);
+
+      timeText.textContent = elapsedSec.toFixed(1);
+      waterText.textContent = waterHeight.toFixed(1);
+      distanceText.textContent = d.toFixed(0);
+
+      waterBar.style.width = `${Math.min(100, waterHeight / maxWaterHeight * 100)}%`;
+
+      if (gameClear) {
+        stateText.textContent = "避難成功";
+        stateText.style.color = "#72ff95";
+      } else if (gameOver) {
+        stateText.textContent = "危険";
+        stateText.style.color = "#ff6666";
+      } else if (gameStarted) {
+        if (isInFloodArea(playerLon, playerLat) && waterHeight > 0.4) {
+          stateText.textContent = "浸水域内。急げ";
+          stateText.style.color = "#ffd966";
+        } else {
+          stateText.textContent = "避難中";
+          stateText.style.color = "white";
+        }
+      } else {
+        stateText.textContent = "待機中";
+        stateText.style.color = "white";
+      }
+    }
+
+    function isInFloodArea(lon, lat) {
+      return lon > 138.245 && lon < 138.260 && lat > 36.398 && lat < 36.4108;
     }
 
     function distanceMeters(lon1, lat1, lon2, lat2) {
-      const rad = Math.PI / 180;
       const R = 6371000;
+      const rad = Math.PI / 180;
       const dLat = (lat2 - lat1) * rad;
       const dLon = (lon2 - lon1) * rad;
+
       const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.sin(dLat / 2) ** 2 +
         Math.cos(lat1 * rad) *
-          Math.cos(lat2 * rad) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
+        Math.cos(lat2 * rad) *
+        Math.sin(dLon / 2) ** 2;
 
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    function pointInPolygon(lon, lat, polygon) {
-      let inside = false;
-
-      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i][0];
-        const yi = polygon[i][1];
-        const xj = polygon[j][0];
-        const yj = polygon[j][1];
-
-        const intersect =
-          yi > lat !== yj > lat &&
-          lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
-
-        if (intersect) inside = !inside;
-      }
-
-      return inside;
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
     }
-
-    function toPairs(flat) {
-      const pairs = [];
-      for (let i = 0; i < flat.length; i += 2) {
-        pairs.push([flat[i], flat[i + 1]]);
-      }
-      return pairs;
-    }
-
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-
-    updateHud();
   </script>
 </body>
 </html>
