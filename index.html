@@ -2,13 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Cesium Flood Evacuation Simulator Prototype</title>
+  <title>VR風 洪水避難ゲーム - Cesium Prototype</title>
 
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Cesium.js"></script>
-  <link
-    href="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Widgets/widgets.css"
-    rel="stylesheet"
-  />
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
 
   <style>
     html,
@@ -19,88 +16,248 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    #panel {
+    #hud {
       position: absolute;
-      top: 16px;
-      left: 16px;
+      top: 14px;
+      left: 14px;
       z-index: 10;
       width: 320px;
-      padding: 16px;
-      background: rgba(12, 18, 28, 0.86);
-      color: #fff;
+      padding: 14px;
       border-radius: 16px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      background: rgba(5, 10, 18, 0.82);
+      color: white;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(8px);
+      user-select: none;
     }
 
-    #panel h1 {
+    #hud h1 {
+      margin: 0 0 8px;
       font-size: 18px;
-      margin: 0 0 12px;
       line-height: 1.35;
     }
 
-    .row {
-      margin-top: 12px;
-    }
-
-    .label {
+    #hud p {
+      margin: 6px 0;
       font-size: 13px;
-      opacity: 0.8;
-      margin-bottom: 4px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.86);
     }
 
-    input[type="range"] {
-      width: 100%;
-    }
-
-    button {
-      width: 100%;
+    .meter {
       margin-top: 10px;
-      padding: 10px 12px;
-      border: none;
-      border-radius: 10px;
-      background: #2f80ed;
-      color: white;
-      font-weight: 700;
-      cursor: pointer;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
     }
 
-    button:hover {
-      background: #1f6fd0;
+    #waterBar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #28c4ff, #1f6fff, #ff3d3d);
+      transition: width 0.12s linear;
     }
 
     #status {
-      margin-top: 12px;
-      padding: 10px;
+      margin-top: 10px;
+      padding: 9px 10px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.08);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
     }
 
-    #warning {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 10px;
-      background: rgba(255, 80, 80, 0.18);
-      border: 1px solid rgba(255, 90, 90, 0.7);
-      color: #ffd4d4;
-      font-weight: 700;
-      display: none;
+    #centerMessage {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
     }
 
-    #credit {
+    #messageBox {
+      max-width: 620px;
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(4, 8, 15, 0.86);
+      color: white;
+      text-align: center;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+
+    #messageBox h2 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    #messageBox p {
+      margin: 8px 0;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    #startButton,
+    #restartButton {
+      margin-top: 16px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 999px;
+      background: #2f80ed;
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    #startButton:hover,
+    #restartButton:hover {
+      background: #1e6ed0;
+    }
+
+    #crosshair {
       position: absolute;
-      right: 12px;
-      bottom: 8px;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      z-index: 9;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    #crosshair::before,
+    #crosshair::after {
+      content: "";
+      position: absolute;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+    }
+
+    #crosshair::before {
+      width: 18px;
+      height: 2px;
+      left: 0;
+      top: 8px;
+    }
+
+    #crosshair::after {
+      width: 2px;
+      height: 18px;
+      left: 8px;
+      top: 0;
+    }
+
+    #mobileControls {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 11;
+      display: grid;
+      grid-template-columns: 58px 58px 58px;
+      grid-template-rows: 58px 58px;
+      gap: 8px;
+      user-select: none;
+    }
+
+    .controlBtn {
+      border: none;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      color: white;
+      font-size: 22px;
+      font-weight: 900;
+      backdrop-filter: blur(8px);
+      touch-action: none;
+    }
+
+    .controlBtn:active {
+      background: rgba(47, 128, 237, 0.75);
+    }
+
+    #btnForward {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    #btnLeft {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    #btnBack {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    #btnRight {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    #lookControls {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 11;
+      display: grid;
+      grid-template-columns: 58px 58px 58px;
+      grid-template-rows: 58px 58px;
+      gap: 8px;
+      user-select: none;
+    }
+
+    #btnLookUp {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    #btnLookLeft {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    #btnLookDown {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    #btnLookRight {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    #tip {
+      position: absolute;
+      right: 14px;
+      top: 14px;
       z-index: 10;
-      color: rgba(255, 255, 255, 0.75);
-      font-size: 11px;
-      text-shadow: 0 1px 2px #000;
+      width: 300px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(5, 10, 18, 0.72);
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 12px;
+      line-height: 1.6;
+      backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 760px) {
+      #hud {
+        width: calc(100vw - 56px);
+      }
+
+      #tip {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -108,58 +265,121 @@
 <body>
   <div id="cesiumContainer"></div>
 
-  <div id="panel">
-    <h1>3D洪水避難シミュレーター 試作</h1>
+  <div id="hud">
+    <h1>VR風 洪水避難ゲーム</h1>
+    <p>水が上がる前に、青い避難タワーまで逃げろ。</p>
+    <p>操作：WASD / 矢印キーで移動、マウスで視点変更。</p>
 
-    <div class="row">
-      <div class="label">経過時間：<span id="timeText">0</span> 分</div>
-      <input id="timeSlider" type="range" min="0" max="30" step="1" value="0" />
+    <div class="meter">
+      <div id="waterBar"></div>
     </div>
-
-    <div class="row">
-      <div class="label">水位：<span id="waterText">0.0</span> m</div>
-      <input id="heightSlider" type="range" min="0" max="6" step="0.1" value="0" />
-    </div>
-
-    <button id="playButton">再生</button>
-    <button id="resetButton">リセット</button>
 
     <div id="status">
-      避難者：一般成人<br />
-      避難ルート：緑色ライン<br />
-      危険判定：水位 1.0m 以上で警告
-    </div>
-
-    <div id="warning">
-      ⚠ 危険：このルートは浸水リスクがあります
+      時間：<span id="timeText">0.0</span> 秒<br />
+      水位：<span id="waterText">0.0</span> m<br />
+      ゴールまで：<span id="distanceText">---</span> m<br />
+      状態：<span id="stateText">待機中</span>
     </div>
   </div>
 
-  <div id="credit">
-    3D都市モデル：国土交通省 PLATEAUを加工して作成 / Cesium ion
+  <div id="tip">
+    <b>VRっぽく遊ぶコツ</b><br />
+    1. 画面中央をクリックしてマウス視点操作<br />
+    2. 低い視点で街を歩く<br />
+    3. 水が来たら高い青いタワーへ逃げる<br />
+    4. Meta Quest等ではブラウザでGitHub Pagesを開く
   </div>
 
-  <script type="module">
-    // =========================================================
-    // 1. Cesium ion Token
-    // =========================================================
-    // 自分のCesium ion tokenに置き換えてください
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MzM4NTMxNi0yYzYwLTRiN2ItYTIzYi0zNzJmZGFhODM5YjMiLCJpZCI6NDI0NjU3LCJpYXQiOjE3NzczNjI0NjZ9.aE_eNCYaVxPso_bdxpBmdSlEt_N0QJH_sa7gXwfZYT8";
+  <div id="crosshair"></div>
 
-    // =========================================================
-    // 2. Viewer 初期化
-    // =========================================================
+  <div id="mobileControls">
+    <button class="controlBtn" id="btnForward">▲</button>
+    <button class="controlBtn" id="btnLeft">◀</button>
+    <button class="controlBtn" id="btnBack">▼</button>
+    <button class="controlBtn" id="btnRight">▶</button>
+  </div>
+
+  <div id="lookControls">
+    <button class="controlBtn" id="btnLookUp">↑</button>
+    <button class="controlBtn" id="btnLookLeft">←</button>
+    <button class="controlBtn" id="btnLookDown">↓</button>
+    <button class="controlBtn" id="btnLookRight">→</button>
+  </div>
+
+  <div id="centerMessage">
+    <div id="messageBox">
+      <h2>水が来る。逃げろ。</h2>
+      <p>
+        あなたは洪水警報が出た街にいます。<br />
+        水位が上がる前に、青い避難タワーまで移動してください。
+      </p>
+      <p>
+        PC：WASD / 矢印キー + マウス<br />
+        スマホ・Questブラウザ：画面下のボタン
+      </p>
+      <button id="startButton">開始する</button>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // 0. 基本設定
+    // ============================================================
+
+    // 上田市付近を想定したローカルなゲーム空間
+    const startLon = 138.2492;
+    const startLat = 36.4023;
+
+    const goalLon = 138.2548;
+    const goalLat = 36.4071;
+
+    let playerLon = startLon;
+    let playerLat = startLat;
+    let playerHeight = 1.75;
+
+    let heading = Cesium.Math.toRadians(42);
+    let pitch = Cesium.Math.toRadians(-5);
+
+    let gameStarted = false;
+    let gameOver = false;
+    let gameClear = false;
+
+    let elapsedSec = 0;
+    let waterHeight = 0;
+
+    const walkSpeed = 3.2; // m/s。ゲームなので少し速め
+    const maxWaterHeight = 4.5;
+    const dangerWaterHeight = 1.15;
+    const goalRadiusMeters = 26;
+
+    const keys = {};
+    const virtualKeys = {};
+
+    const timeText = document.getElementById("timeText");
+    const waterText = document.getElementById("waterText");
+    const distanceText = document.getElementById("distanceText");
+    const stateText = document.getElementById("stateText");
+    const waterBar = document.getElementById("waterBar");
+    const centerMessage = document.getElementById("centerMessage");
+    const messageBox = document.getElementById("messageBox");
+    const startButton = document.getElementById("startButton");
+
+    // ============================================================
+    // 1. Cesium Viewer
+    // ============================================================
+
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      terrain: Cesium.Terrain.fromWorldTerrain(),
-      timeline: false,
       animation: false,
-      baseLayerPicker: true,
+      timeline: false,
       geocoder: false,
-      homeButton: true,
+      homeButton: false,
       sceneModePicker: false,
+      baseLayerPicker: false,
       navigationHelpButton: false,
       infoBox: false,
       selectionIndicator: false,
+      fullscreenButton: true,
+      vrButton: true,
       shouldAnimate: true
     });
 
@@ -167,371 +387,552 @@
     viewer.scene.skyAtmosphere.show = true;
     viewer.scene.globe.enableLighting = true;
 
-    // =========================================================
-    // 3. 対象地域
-    // 仮に上田市・千曲川付近
-    // 必要に応じて座標を変更してください
-    // =========================================================
-    const centerLon = 138.249;
-    const centerLat = 36.402;
+    // デフォルトのマウス地図操作を切る。自前FPS操作にする
+    viewer.scene.screenSpaceCameraController.enableRotate = false;
+    viewer.scene.screenSpaceCameraController.enableTranslate = false;
+    viewer.scene.screenSpaceCameraController.enableZoom = false;
+    viewer.scene.screenSpaceCameraController.enableTilt = false;
+    viewer.scene.screenSpaceCameraController.enableLook = false;
 
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(centerLon, centerLat, 1800),
-      orientation: {
-        heading: Cesium.Math.toRadians(0),
-        pitch: Cesium.Math.toRadians(-55),
-        roll: 0
+    // 最初の視点
+    setCamera();
+
+    // ============================================================
+    // 2. 地面・避難タワー・ビル群
+    // ============================================================
+
+    // ゲームエリアの地面
+    viewer.entities.add({
+      name: "ゲームエリア",
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray([
+          138.2440, 36.3975,
+          138.2605, 36.3975,
+          138.2605, 36.4115,
+          138.2440, 36.4115
+        ]),
+        material: Cesium.Color.fromBytes(38, 47, 42, 210),
+        outline: true,
+        outlineColor: Cesium.Color.fromBytes(130, 160, 140, 220)
       }
     });
 
-    // =========================================================
-    // 4. Japan 3D Buildingsを追加
-    // 重い場合はコメントアウトしてください
-    // =========================================================
-    try {
-      const buildings = await Cesium.Cesium3DTileset.fromIonAssetId(2602291);
-      viewer.scene.primitives.add(buildings);
+    // 道路っぽいライン
+    addRoad([
+      [138.2460, 36.3990],
+      [138.2492, 36.4023],
+      [138.2522, 36.4044],
+      [138.2548, 36.4071]
+    ], Cesium.Color.fromBytes(80, 80, 80, 255), 12);
 
-      buildings.maximumScreenSpaceError = 8;
-      buildings.dynamicScreenSpaceError = true;
-      buildings.dynamicScreenSpaceErrorDensity = 0.00278;
-      buildings.dynamicScreenSpaceErrorFactor = 4.0;
-    } catch (error) {
-      console.warn("3D Buildingsの読み込みに失敗しました", error);
-    }
+    addRoad([
+      [138.2470, 36.4068],
+      [138.2502, 36.4049],
+      [138.2558, 36.4032]
+    ], Cesium.Color.fromBytes(70, 70, 70, 255), 10);
 
-    // =========================================================
-    // 5. 浸水ポリゴン
-    // 実運用ではハザードポリゴンに置き換える
-    // =========================================================
-    const floodPolygonDegrees = [
-      138.242, 36.397,
-      138.257, 36.397,
-      138.260, 36.406,
-      138.246, 36.411,
-      138.239, 36.405
+    addRoad([
+      [138.2515, 36.3988],
+      [138.2512, 36.4022],
+      [138.2515, 36.4078]
+    ], Cesium.Color.fromBytes(65, 65, 65, 255), 9);
+
+    // ビル群
+    createCityBlocks();
+
+    // 避難タワー
+    addTower(goalLon, goalLat);
+
+    // スタート地点
+    viewer.entities.add({
+      name: "スタート",
+      position: Cesium.Cartesian3.fromDegrees(startLon, startLat, 2),
+      cylinder: {
+        length: 4,
+        topRadius: 3,
+        bottomRadius: 3,
+        material: Cesium.Color.RED.withAlpha(0.85)
+      },
+      label: {
+        text: "START",
+        font: "bold 16px sans-serif",
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, -36)
+      }
+    });
+
+    // 目標ライン
+    addRoad([
+      [startLon, startLat],
+      [138.2505, 36.4036],
+      [138.2528, 36.4051],
+      [goalLon, goalLat]
+    ], Cesium.Color.LIME.withAlpha(0.95), 5);
+
+    // ============================================================
+    // 3. 洪水エリアと水表現
+    // ============================================================
+
+    const floodPolygon = [
+      138.2452, 36.3984,
+      138.2587, 36.3985,
+      138.2598, 36.4055,
+      138.2562, 36.4105,
+      138.2472, 36.4096,
+      138.2446, 36.4042
     ];
 
-    let currentWaterHeight = 0.0;
-    let waterPrimitive = null;
+    const waterMaterial = new Cesium.ColorMaterialProperty(
+      new Cesium.CallbackProperty(() => {
+        const pulse = 0.46 + Math.sin(performance.now() * 0.004) * 0.08;
+        return new Cesium.Color(0.02, 0.35 + pulse * 0.1, 0.72, pulse);
+      }, false)
+    );
 
-    function createWaterPrimitive(heightMeters) {
-      if (waterPrimitive) {
-        viewer.scene.primitives.remove(waterPrimitive);
-        waterPrimitive = null;
+    viewer.entities.add({
+      name: "上昇する洪水",
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(floodPolygon),
+        height: new Cesium.CallbackProperty(() => waterHeight, false),
+        extrudedHeight: 0,
+        material: waterMaterial,
+        outline: true,
+        outlineColor: Cesium.Color.CYAN.withAlpha(0.9)
+      }
+    });
+
+    // 波っぽい線を何本か
+    for (let i = 0; i < 11; i++) {
+      addWaveLine(i);
+    }
+
+    // ============================================================
+    // 4. 入力
+    // ============================================================
+
+    window.addEventListener("keydown", (e) => {
+      keys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    document.body.addEventListener("click", () => {
+      if (gameStarted && !gameOver && !gameClear) {
+        document.body.requestPointerLock?.();
+      }
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (document.pointerLockElement === document.body) {
+        heading += e.movementX * 0.0022;
+        pitch -= e.movementY * 0.0018;
+        pitch = clamp(pitch, Cesium.Math.toRadians(-45), Cesium.Math.toRadians(18));
+      }
+    });
+
+    bindButton("btnForward", "forward");
+    bindButton("btnBack", "back");
+    bindButton("btnLeft", "left");
+    bindButton("btnRight", "right");
+
+    bindButton("btnLookUp", "lookUp");
+    bindButton("btnLookDown", "lookDown");
+    bindButton("btnLookLeft", "lookLeft");
+    bindButton("btnLookRight", "lookRight");
+
+    startButton.addEventListener("click", () => {
+      startGame();
+    });
+
+    // ============================================================
+    // 5. ゲームループ
+    // ============================================================
+
+    let lastTime = performance.now();
+
+    viewer.clock.onTick.addEventListener(() => {
+      const now = performance.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      if (!gameStarted || gameOver || gameClear) {
+        setCamera();
+        updateHud();
+        return;
       }
 
-      const positions = Cesium.Cartesian3.fromDegreesArray(floodPolygonDegrees);
+      elapsedSec += dt;
 
-      const geometry = new Cesium.PolygonGeometry({
-        polygonHierarchy: new Cesium.PolygonHierarchy(positions),
-        height: heightMeters,
-        extrudedHeight: 0,
-        vertexFormat: Cesium.MaterialAppearance.MaterialSupport.TEXTURED.vertexFormat
+      // 水位上昇。最初はゆっくり、後半で速く
+      waterHeight = Math.min(maxWaterHeight, 0.12 * elapsedSec + 0.006 * elapsedSec * elapsedSec);
+
+      updateLookByButtons(dt);
+      updatePlayer(dt);
+      setCamera();
+      checkGameState();
+      updateHud();
+    });
+
+    // ============================================================
+    // 関数群
+    // ============================================================
+
+    function startGame() {
+      gameStarted = true;
+      gameOver = false;
+      gameClear = false;
+      elapsedSec = 0;
+      waterHeight = 0;
+
+      playerLon = startLon;
+      playerLat = startLat;
+      heading = Cesium.Math.toRadians(42);
+      pitch = Cesium.Math.toRadians(-5);
+
+      centerMessage.style.display = "none";
+      stateText.textContent = "避難中";
+      setCamera();
+
+      setTimeout(() => {
+        document.body.requestPointerLock?.();
+      }, 150);
+    }
+
+    function restartGame() {
+      centerMessage.style.display = "flex";
+      messageBox.innerHTML = `
+        <h2>もう一度挑戦</h2>
+        <p>水が来る前に青い避難タワーへ逃げてください。</p>
+        <button id="restartButton">再スタート</button>
+      `;
+
+      document.getElementById("restartButton").addEventListener("click", () => {
+        startGame();
       });
+    }
 
-      const instance = new Cesium.GeometryInstance({
-        geometry: geometry
+    function updatePlayer(dt) {
+      let forward = 0;
+      let strafe = 0;
+
+      if (keys["w"] || keys["arrowup"] || virtualKeys.forward) forward += 1;
+      if (keys["s"] || keys["arrowdown"] || virtualKeys.back) forward -= 1;
+      if (keys["a"] || keys["arrowleft"] || virtualKeys.left) strafe -= 1;
+      if (keys["d"] || keys["arrowright"] || virtualKeys.right) strafe += 1;
+
+      const len = Math.hypot(forward, strafe);
+      if (len > 0) {
+        forward /= len;
+        strafe /= len;
+      }
+
+      const speed = walkSpeed * dt;
+
+      // heading 0 = 北、右方向は東
+      const dNorth = speed * (forward * Math.cos(heading) - strafe * Math.sin(heading));
+      const dEast = speed * (forward * Math.sin(heading) + strafe * Math.cos(heading));
+
+      const metersPerDegLat = 111320;
+      const metersPerDegLon = 111320 * Math.cos(Cesium.Math.toRadians(playerLat));
+
+      playerLat += dNorth / metersPerDegLat;
+      playerLon += dEast / metersPerDegLon;
+
+      // ゲームエリアから出すぎないように制限
+      playerLon = clamp(playerLon, 138.2445, 138.2600);
+      playerLat = clamp(playerLat, 36.3980, 36.4110);
+    }
+
+    function updateLookByButtons(dt) {
+      const lookSpeed = 1.8 * dt;
+
+      if (virtualKeys.lookLeft) heading -= lookSpeed;
+      if (virtualKeys.lookRight) heading += lookSpeed;
+      if (virtualKeys.lookUp) pitch += lookSpeed * 0.55;
+      if (virtualKeys.lookDown) pitch -= lookSpeed * 0.55;
+
+      pitch = clamp(pitch, Cesium.Math.toRadians(-45), Cesium.Math.toRadians(18));
+    }
+
+    function setCamera() {
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(playerLon, playerLat, playerHeight),
+        orientation: {
+          heading,
+          pitch,
+          roll: 0
+        }
       });
+    }
 
-      const waterMaterial = new Cesium.Material({
-        fabric: {
-          type: "Water",
-          uniforms: {
-            normalMap: "./waterNormals.jpg",
-            frequency: 900.0,
-            animationSpeed: 0.025,
-            amplitude: 4.0,
-            specularIntensity: 0.7,
-            baseWaterColor: new Cesium.Color(0.05, 0.25, 0.35, 0.55),
-            blendColor: new Cesium.Color(0.0, 0.45, 0.65, 0.45)
-          }
+    function checkGameState() {
+      const distanceToGoal = distanceMeters(playerLon, playerLat, goalLon, goalLat);
+      const inFlood = pointInPolygon(playerLon, playerLat, toPairs(floodPolygon));
+
+      if (distanceToGoal <= goalRadiusMeters) {
+        gameClear = true;
+        gameStarted = false;
+        document.exitPointerLock?.();
+
+        centerMessage.style.display = "flex";
+        messageBox.innerHTML = `
+          <h2>避難成功！</h2>
+          <p>水位 ${waterHeight.toFixed(1)} m の時点で避難タワーに到着しました。</p>
+          <p>次は、水位上昇を速くしたり、ルートを複雑にするとゲーム性が上がります。</p>
+          <button id="restartButton">もう一度遊ぶ</button>
+        `;
+
+        document.getElementById("restartButton").addEventListener("click", () => {
+          startGame();
+        });
+
+        return;
+      }
+
+      if (inFlood && waterHeight >= dangerWaterHeight) {
+        gameOver = true;
+        gameStarted = false;
+        document.exitPointerLock?.();
+
+        centerMessage.style.display = "flex";
+        messageBox.innerHTML = `
+          <h2>避難失敗</h2>
+          <p>水位が ${waterHeight.toFixed(1)} m に達し、浸水エリア内で危険状態になりました。</p>
+          <p>次は、緑の誘導ラインを見ながら早めに避難してください。</p>
+          <button id="restartButton">もう一度挑戦する</button>
+        `;
+
+        document.getElementById("restartButton").addEventListener("click", () => {
+          startGame();
+        });
+      }
+    }
+
+    function updateHud() {
+      const distanceToGoal = distanceMeters(playerLon, playerLat, goalLon, goalLat);
+
+      timeText.textContent = elapsedSec.toFixed(1);
+      waterText.textContent = waterHeight.toFixed(1);
+      distanceText.textContent = Math.max(0, distanceToGoal).toFixed(0);
+
+      const ratio = Math.min(100, (waterHeight / maxWaterHeight) * 100);
+      waterBar.style.width = `${ratio}%`;
+
+      if (gameClear) {
+        stateText.textContent = "避難成功";
+        stateText.style.color = "#7cff9e";
+      } else if (gameOver) {
+        stateText.textContent = "危険";
+        stateText.style.color = "#ff6a6a";
+      } else if (gameStarted) {
+        const inFlood = pointInPolygon(playerLon, playerLat, toPairs(floodPolygon));
+
+        if (inFlood && waterHeight > 0.5) {
+          stateText.textContent = "浸水域内：急いで避難";
+          stateText.style.color = "#ffd36a";
+        } else {
+          stateText.textContent = "避難中";
+          stateText.style.color = "#ffffff";
+        }
+      } else {
+        stateText.textContent = "待機中";
+        stateText.style.color = "#ffffff";
+      }
+    }
+
+    function addRoad(points, color, width) {
+      viewer.entities.add({
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArray(points.flat()),
+          width,
+          clampToGround: true,
+          material: color
+        }
+      });
+    }
+
+    function addTower(lon, lat) {
+      viewer.entities.add({
+        name: "避難タワー",
+        position: Cesium.Cartesian3.fromDegrees(lon, lat, 18),
+        cylinder: {
+          length: 36,
+          topRadius: 7,
+          bottomRadius: 7,
+          material: Cesium.Color.ROYALBLUE.withAlpha(0.95),
+          outline: true,
+          outlineColor: Cesium.Color.WHITE
+        },
+        label: {
+          text: "避難タワー",
+          font: "bold 18px sans-serif",
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 4,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -54)
         }
       });
 
-      waterPrimitive = new Cesium.Primitive({
-        geometryInstances: instance,
-        appearance: new Cesium.MaterialAppearance({
-          material: waterMaterial,
-          translucent: true,
-          closed: true
-        }),
-        asynchronous: false
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lon, lat, 40),
+        ellipsoid: {
+          radii: new Cesium.Cartesian3(18, 18, 18),
+          material: Cesium.Color.CYAN.withAlpha(0.22),
+          outline: true,
+          outlineColor: Cesium.Color.CYAN
+        }
       });
-
-      viewer.scene.primitives.add(waterPrimitive);
     }
 
-    createWaterPrimitive(currentWaterHeight);
-
-    // =========================================================
-    // 6. 避難ルート
-    // 実運用では道路ネットワークや事前計算ルートに置き換える
-    // =========================================================
-    const evacuationRoute = [
-      138.247, 36.399, 0,
-      138.249, 36.401, 0,
-      138.251, 36.404, 0,
-      138.253, 36.407, 0,
-      138.256, 36.409, 0
-    ];
-
-    const routeEntity = viewer.entities.add({
-      name: "避難ルート",
-      polyline: {
-        positions: Cesium.Cartesian3.fromDegreesArrayHeights(evacuationRoute),
-        width: 6,
-        clampToGround: true,
-        material: new Cesium.PolylineGlowMaterialProperty({
-          glowPower: 0.22,
-          color: Cesium.Color.LIME
-        })
-      }
-    });
-
-    // 出発地点
-    viewer.entities.add({
-      name: "出発地点",
-      position: Cesium.Cartesian3.fromDegrees(138.247, 36.399, 20),
-      billboard: {
-        image: createPinDataUrl("#ff5252", "S"),
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        scale: 0.9
-      },
-      label: {
-        text: "出発",
-        font: "14px sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -42)
-      }
-    });
-
-    // 避難先
-    viewer.entities.add({
-      name: "避難先",
-      position: Cesium.Cartesian3.fromDegrees(138.256, 36.409, 20),
-      billboard: {
-        image: createPinDataUrl("#2f80ed", "G"),
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        scale: 0.9
-      },
-      label: {
-        text: "避難先",
-        font: "14px sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -42)
-      }
-    });
-
-    // =========================================================
-    // 7. 避難者アイコン
-    // 時間に応じてルート上を移動する
-    // =========================================================
-    const evacueePosition = new Cesium.CallbackProperty(() => {
-      const progress = Math.min(currentTimeMinutes / 20, 1);
-      const point = interpolateRoute(progress);
-      return Cesium.Cartesian3.fromDegrees(point.lon, point.lat, 12);
-    }, false);
-
-    viewer.entities.add({
-      name: "避難者",
-      position: evacueePosition,
-      point: {
-        pixelSize: 14,
-        color: Cesium.Color.YELLOW,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 2,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-      },
-      label: {
-        text: "避難者",
-        font: "13px sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -28)
-      }
-    });
-
-    function interpolateRoute(progress) {
-      const points = [
-        { lon: 138.247, lat: 36.399 },
-        { lon: 138.249, lat: 36.401 },
-        { lon: 138.251, lat: 36.404 },
-        { lon: 138.253, lat: 36.407 },
-        { lon: 138.256, lat: 36.409 }
+    function createCityBlocks() {
+      const buildings = [
+        [138.2470, 36.4000, 16, 18, 20, 20],
+        [138.2485, 36.4006, 10, 24, 18, 35],
+        [138.2505, 36.4016, 22, 14, 16, 10],
+        [138.2520, 36.4024, 18, 18, 24, 45],
+        [138.2534, 36.4036, 12, 28, 20, 0],
+        [138.2554, 36.4046, 28, 16, 22, 30],
+        [138.2480, 36.4052, 20, 18, 18, 10],
+        [138.2505, 36.4064, 18, 20, 26, 55],
+        [138.2528, 36.4070, 14, 22, 18, 25],
+        [138.2562, 36.4068, 26, 18, 30, 35],
+        [138.2464, 36.4076, 12, 18, 16, 0],
+        [138.2492, 36.4085, 20, 16, 20, 20],
+        [138.2522, 36.4090, 16, 24, 22, 40],
+        [138.2575, 36.4088, 24, 16, 18, 5],
+        [138.2557, 36.4010, 18, 20, 20, 60],
+        [138.2572, 36.4022, 10, 30, 18, 20]
       ];
 
-      const totalSegments = points.length - 1;
-      const scaled = progress * totalSegments;
-      const index = Math.min(Math.floor(scaled), totalSegments - 1);
-      const localT = scaled - index;
+      buildings.forEach((b, i) => {
+        const [lon, lat, h, sx, sy, deg] = b;
+        addBuilding(lon, lat, h, sx, sy, deg, i);
+      });
+    }
 
-      const a = points[index];
-      const b = points[index + 1];
+    function addBuilding(lon, lat, height, sizeX, sizeY, headingDeg, index) {
+      const colorSet = [
+        Cesium.Color.fromBytes(150, 150, 145, 235),
+        Cesium.Color.fromBytes(120, 135, 150, 235),
+        Cesium.Color.fromBytes(165, 145, 125, 235),
+        Cesium.Color.fromBytes(100, 115, 125, 235)
+      ];
 
-      return {
-        lon: a.lon + (b.lon - a.lon) * localT,
-        lat: a.lat + (b.lat - a.lat) * localT
+      const hpr = new Cesium.HeadingPitchRoll(
+        Cesium.Math.toRadians(headingDeg),
+        0,
+        0
+      );
+
+      const position = Cesium.Cartesian3.fromDegrees(lon, lat, height / 2);
+
+      viewer.entities.add({
+        position,
+        orientation: Cesium.Transforms.headingPitchRollQuaternion(position, hpr),
+        box: {
+          dimensions: new Cesium.Cartesian3(sizeX, sizeY, height),
+          material: colorSet[index % colorSet.length],
+          outline: true,
+          outlineColor: Cesium.Color.fromBytes(230, 230, 230, 140)
+        }
+      });
+    }
+
+    function addWaveLine(i) {
+      viewer.entities.add({
+        polyline: {
+          positions: new Cesium.CallbackProperty(() => {
+            const t = performance.now() * 0.001;
+            const baseLat = 36.3994 + i * 0.00095;
+            const offset = Math.sin(t * 1.4 + i) * 0.00012;
+
+            const pts = [];
+            for (let k = 0; k < 18; k++) {
+              const lon = 138.2460 + k * 0.00072;
+              const lat = baseLat + Math.sin(k * 0.9 + t * 2.0 + i) * 0.00009 + offset;
+              pts.push(lon, lat, waterHeight + 0.08);
+            }
+
+            return Cesium.Cartesian3.fromDegreesArrayHeights(pts);
+          }, false),
+          width: 2,
+          material: Cesium.Color.WHITE.withAlpha(0.24)
+        }
+      });
+    }
+
+    function bindButton(id, keyName) {
+      const el = document.getElementById(id);
+
+      const down = (e) => {
+        e.preventDefault();
+        virtualKeys[keyName] = true;
       };
+
+      const up = (e) => {
+        e.preventDefault();
+        virtualKeys[keyName] = false;
+      };
+
+      el.addEventListener("pointerdown", down);
+      el.addEventListener("pointerup", up);
+      el.addEventListener("pointercancel", up);
+      el.addEventListener("pointerleave", up);
     }
 
-    // =========================================================
-    // 8. UI制御
-    // =========================================================
-    const timeSlider = document.getElementById("timeSlider");
-    const heightSlider = document.getElementById("heightSlider");
-    const timeText = document.getElementById("timeText");
-    const waterText = document.getElementById("waterText");
-    const warning = document.getElementById("warning");
-    const playButton = document.getElementById("playButton");
-    const resetButton = document.getElementById("resetButton");
+    function distanceMeters(lon1, lat1, lon2, lat2) {
+      const rad = Math.PI / 180;
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * rad;
+      const dLon = (lon2 - lon1) * rad;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * rad) *
+          Math.cos(lat2 * rad) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
 
-    let currentTimeMinutes = 0;
-    let playing = false;
-    let lastUpdateTime = performance.now();
-
-    function waterHeightFromTime(minutes) {
-      // 水位上昇カーブ
-      // 0分: 0m
-      // 10分: 約1.2m
-      // 20分: 約3.2m
-      // 30分: 約5.5m
-      const t = minutes / 30;
-      return Math.min(6, 5.5 * Math.pow(t, 1.45));
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    function updateSimulationByTime(minutes) {
-      currentTimeMinutes = Number(minutes);
-      currentWaterHeight = waterHeightFromTime(currentTimeMinutes);
+    function pointInPolygon(lon, lat, polygon) {
+      let inside = false;
 
-      timeSlider.value = currentTimeMinutes;
-      heightSlider.value = currentWaterHeight.toFixed(1);
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i][0];
+        const yi = polygon[i][1];
+        const xj = polygon[j][0];
+        const yj = polygon[j][1];
 
-      timeText.textContent = currentTimeMinutes.toFixed(0);
-      waterText.textContent = currentWaterHeight.toFixed(1);
+        const intersect =
+          yi > lat !== yj > lat &&
+          lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
 
-      createWaterPrimitive(currentWaterHeight);
-      updateRiskVisual();
-    }
-
-    function updateSimulationByHeight(height) {
-      currentWaterHeight = Number(height);
-      waterText.textContent = currentWaterHeight.toFixed(1);
-
-      createWaterPrimitive(currentWaterHeight);
-      updateRiskVisual();
-    }
-
-    function updateRiskVisual() {
-      if (currentWaterHeight >= 1.0) {
-        warning.style.display = "block";
-
-        routeEntity.polyline.material = new Cesium.PolylineGlowMaterialProperty({
-          glowPower: 0.28,
-          color: Cesium.Color.RED
-        });
-      } else if (currentWaterHeight >= 0.5) {
-        warning.style.display = "none";
-
-        routeEntity.polyline.material = new Cesium.PolylineGlowMaterialProperty({
-          glowPower: 0.25,
-          color: Cesium.Color.ORANGE
-        });
-      } else {
-        warning.style.display = "none";
-
-        routeEntity.polyline.material = new Cesium.PolylineGlowMaterialProperty({
-          glowPower: 0.22,
-          color: Cesium.Color.LIME
-        });
-      }
-    }
-
-    timeSlider.addEventListener("input", (event) => {
-      playing = false;
-      playButton.textContent = "再生";
-      updateSimulationByTime(event.target.value);
-    });
-
-    heightSlider.addEventListener("input", (event) => {
-      playing = false;
-      playButton.textContent = "再生";
-      updateSimulationByHeight(event.target.value);
-    });
-
-    playButton.addEventListener("click", () => {
-      playing = !playing;
-      playButton.textContent = playing ? "停止" : "再生";
-      lastUpdateTime = performance.now();
-    });
-
-    resetButton.addEventListener("click", () => {
-      playing = false;
-      playButton.textContent = "再生";
-      updateSimulationByTime(0);
-    });
-
-    viewer.clock.onTick.addEventListener(() => {
-      if (!playing) return;
-
-      const now = performance.now();
-      const delta = now - lastUpdateTime;
-      lastUpdateTime = now;
-
-      // 実時間1秒でシミュレーション1分進める
-      currentTimeMinutes += delta / 1000;
-
-      if (currentTimeMinutes >= 30) {
-        currentTimeMinutes = 30;
-        playing = false;
-        playButton.textContent = "再生";
+        if (intersect) inside = !inside;
       }
 
-      // プリミティブ再生成は重いので、0.25分刻みに丸める
-      const rounded = Math.round(currentTimeMinutes * 4) / 4;
-      updateSimulationByTime(rounded);
-    });
-
-    // =========================================================
-    // 9. ピン画像をCanvasで生成
-    // =========================================================
-    function createPinDataUrl(color, text) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext("2d");
-
-      ctx.beginPath();
-      ctx.arc(32, 24, 18, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(32, 62);
-      ctx.lineTo(20, 36);
-      ctx.lineTo(44, 36);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      ctx.font = "bold 24px sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, 32, 25);
-
-      return canvas.toDataURL();
+      return inside;
     }
 
-    updateSimulationByTime(0);
+    function toPairs(flat) {
+      const pairs = [];
+      for (let i = 0; i < flat.length; i += 2) {
+        pairs.push([flat[i], flat[i + 1]]);
+      }
+      return pairs;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    updateHud();
   </script>
 </body>
 </html>
